@@ -1,0 +1,986 @@
+//
+// 
+// Author: Kalpkumar Shah, UIC, Fall 2020
+// Building a user interface to serve as an integer calculator
+// 
+//
+
+#include <iostream>
+#include <cstring>
+#include <fstream>
+#include "integer.h"
+
+using namespace std;
+
+//
+// Load
+//
+// Load function tries to call the file and the dynamic array by reference
+// and checks for each and every command which are available in main
+// It also calls itself if the file opens another file in it.
+//
+
+void Load(ifstream& infile, Integer*& integerSize, int& memorySize)
+{
+    int cmd1{0};
+    char cmd = 'a';
+    string asks;
+    
+    infile >> cmd;
+    
+    //
+    // loop until 'x' 
+    //
+    
+    while (cmd != 'x')
+    {
+        //
+        // if command is 'i'
+        //
+        
+        if (cmd == 'i')
+        {
+            infile >> cmd1;
+            infile >> asks;
+            int count = cmd1;
+            if (count <= memorySize && asks == "?")                // <var> ?
+            {
+                cout << integerSize[count].toStr() << endl;
+            }
+            
+            else if (count <= memorySize && asks == "=")           // <var> = <term>
+            {
+                string data{0};
+                infile >> data;
+                
+                if(data.front() == 'i')
+                {
+                    string next(data.begin() + 1, data.end());
+                    int value = stoi(next);
+                    
+                    integerSize[count] = integerSize[value];
+                }
+                else if (isdigit(data.front()))
+                {
+                    Integer temp(data);
+                    integerSize[count].add(temp);
+                }
+            }
+            
+            else if (count <= memorySize && asks == "+=")          // <var> += <term>
+            {
+                string data{0};
+                infile >> data;
+                
+                if (data.front() == 'i')
+                {
+                    string next(data.begin() + 1, data.end());
+                    int value = stoi(next);
+                    
+                    integerSize[count].add(integerSize[value]);
+                }
+                else if (isdigit(data.front()))
+                {
+                    Integer temp(data);
+                    integerSize[count].add(temp);
+                }
+            }
+            
+            else if (count <= memorySize && asks == "<<")          // <var> << <int>
+            {
+                int data{0};
+                infile >> data;
+                
+                integerSize[count].shift_left(data);
+            }
+            
+            else if (count <= memorySize && asks == ">>")          // <var> >> <int>
+            {
+                int data{0};
+                infile >> data;
+                
+                integerSize[count].shift_right(data);
+            }
+            
+            else
+                cout << "Invalid variable, try again..." << endl;
+        }
+        
+        //
+        // load commandfile
+        //
+        
+        else if (cmd == 'l')
+        {
+            string commandFile;
+            infile >> commandFile;
+            ifstream infile (commandFile);
+            if (!infile.good())
+            {
+                cout << "File does not exist, try again..." << endl;
+            }
+            else
+            {
+                cout << "Load: loading '" << commandFile << "'" << endl;
+                Load(infile,integerSize,memorySize);
+                cout << "Load: done '" << commandFile << "'" << endl;
+            }
+        }
+        
+        //
+        // if command is invalid
+        //
+        
+        else
+        {
+            cout << "Invalid command, try again..." << endl;
+            string ignore;
+            infile >> ignore;
+        }
+        
+        infile >> cmd;
+    }
+}
+
+//
+// <cmds> ::= <cmd> <more>
+// <more> ::= <cmd> <more>
+//          | EMPTY
+//
+// <cmd> ::= x
+// ::= l commandfile
+// ::= <expr>
+// <expr> ::= <var> ?
+//          | <var> = <term>
+//          | <var> += <term>
+//          | <var> << <int>
+//          | <var> >> <int>
+// <term> ::= <var>
+//          | <int>
+//
+// <var> ::= i1 | i2 | i3 | i4 | i5 | ...
+// <int> ::= 0 | 1 | 2 | 3 | 4 | 5 | ...
+//
+
+int main()
+{
+    int memorySize{0},cmd1{1};
+    char cmd = 'a';
+    string asks;
+    
+    cout << "Memory size? ";
+    cin >> memorySize;
+    
+    //
+    // dynamic array
+    // 
+    
+    Integer* integerSize;
+    integerSize = new Integer[memorySize+1];
+    
+    cout << "> ";
+    cin >> cmd;
+    
+    //
+    // loop until 'x' 
+    //
+    
+    while (cmd != 'x')
+    {
+        //
+        // if command is 'i'
+        //
+        
+        if (cmd == 'i')
+        {
+            cin >> cmd1;
+            cin >> asks;
+            int count = cmd1;
+            if (count <= memorySize && asks == "?" && count > 0)   // <var> ?
+            {
+                cout << integerSize[count].toStr() << endl;
+            }
+            
+            else if (count <= memorySize && asks == "=")           // <var> = <term>
+            {
+                string data{0};
+                cin >> data;
+                
+                if(data.front() == 'i')
+                {
+                    string next(data.begin() + 1, data.end());
+                    int value = stoi(next);
+                    
+                    integerSize[count] = integerSize[value];
+                }
+                else if (isdigit(data.front()))
+                {
+                    Integer temp(data);
+                    integerSize[count].add(temp);
+                }
+            }
+            
+            else if (count <= memorySize && asks == "+=")          // <var> += <term>
+            {
+                string data{0};
+                cin >> data;
+                
+                if (data.front() == 'i')
+                {
+                    string next(data.begin() + 1, data.end());
+                    int value = stoi(next);
+                    
+                    integerSize[count].add(integerSize[value]);
+                }
+                else if (isdigit(data.front()))
+                {
+                    Integer temp(data);
+                    integerSize[count].add(temp);
+                }
+            }
+            
+            else if (count <= memorySize && asks == "<<")          // <var> << <int>
+            {
+                int data{0};
+                cin >> data;
+                
+                integerSize[count].shift_left(data);
+            }
+            
+            else if (count <= memorySize && asks == ">>")          // <var> >> <int>
+            {
+                int data{0};
+                cin >> data;
+                
+                integerSize[count].shift_right(data);
+            }
+            
+            else
+                cout << "Invalid variable, try again..." << endl;
+        }
+        
+        //
+        // load commandfile
+        //
+        
+        else if (cmd == 'l')
+        {
+            string commandFile;
+            cin >> commandFile;
+            ifstream infile (commandFile);
+            if (!infile.good())
+            {
+                cout << "File does not exist, try again..." << endl;
+            }
+            else
+            {
+                cout << "Load: loading '" << commandFile << "'" << endl;
+                Load(infile,integerSize,memorySize);
+                cout << "Load: done '" << commandFile << "'" << endl;
+            }
+            
+        }
+        
+        //
+        // if command is invalid
+        //
+        
+        else 
+        {
+            cout << "Invalid command, try again..." << endl;
+            string ignore;
+            cin >> ignore;
+        }
+        
+        cout << "> ";
+        cin >> cmd;
+    }
+    
+    //
+    // deleting dynamic array
+    //
+    
+    delete []integerSize;
+    return 0;
+}
+
+
+
+
+
+
+
+
+
+
+
+/*integer.h*/
+
+//
+// An Integer class for adding and shifting integers of unlimited
+// digits.  Each integer is stored as a linked-list of individual
+// digits.
+//
+// Author: Kalpkumar Shah, UIC, Fall 2020
+// Initially by: Prof. Hummel, U. of Illinois Chicago, Fall 2020
+// Project 06
+//
+
+#pragma once
+
+#include <iostream>
+#include <string>
+#include <exception>
+#include <stdexcept>
+
+using namespace std;
+
+
+class Integer
+{
+private:
+
+   //
+   // Data members:
+   //
+    class Node
+    {
+    public:
+        int Value;
+        Node* Next;
+        Node* Prev;
+    };
+
+    Node* Head;
+    Node* Tail;
+    
+   //
+   // Private function members:
+   //
+   
+    void free()
+    {
+        Node* cur = Head;
+        while (cur != nullptr)
+        {
+            Node* Temp = cur;
+            cur = cur->Next;
+            delete Temp;
+        }
+        Head = nullptr;
+        Tail = nullptr;
+    }
+    
+    int  size() const
+    {
+        int count = 0;
+        Node* cur = this->Head;
+        while(cur != nullptr)
+        {
+            count++;
+            cur = cur->Next;
+        }
+        return count;    
+    }
+
+    void deepCopy(const Integer& other) 
+    {
+        this->Head = nullptr;
+        this->Tail = nullptr;
+
+        int pos{0}, value{0}, x = this->size();
+        while(x != other.size())
+        {
+            value = other.ith(pos);
+            this->push_back(value);
+            x++;
+            pos++;
+        }
+    }
+    
+    int  ith(int position) const
+    {
+       Node* cur = this->Head;
+       int count=0;
+   
+       while(cur != nullptr)
+       {
+          if(count == position)
+          {
+             return cur->Value;
+          }
+          count++;
+          cur = cur->Next;
+       }
+       throw invalid_argument("ith: invalid position");
+    }
+    
+    void insert( int position, int value)
+    {
+        Node* cur = this->Head;
+        Node* prev = nullptr;
+        while(cur != nullptr)
+        {
+            if(position == 0)
+            {
+                break;
+            }
+            position--;
+            prev = cur;
+            cur = cur->Next;
+        }
+   
+        if(position != 0 && cur == nullptr && prev == nullptr)
+        {
+            throw invalid_argument("insert: position invalid");
+        }
+        Node* newN = new Node();
+        newN->Prev = nullptr;
+        newN->Next = nullptr;
+        newN->Value = value;
+        if(cur != nullptr && prev != nullptr)
+        {
+            prev->Next = newN;
+            newN->Next = cur;
+            cur->Prev = newN;
+            newN->Prev = prev;
+        }
+        else if(cur == nullptr)
+        {
+            if(prev != nullptr)
+            {
+                newN->Prev = prev;
+                prev->Next =newN;
+                this->Tail = newN;
+            }
+            else
+            {
+                this->Tail = newN;
+                this->Head = this->Tail;
+            }
+         }
+        else
+        {
+            if(cur != nullptr)
+            {
+                newN->Next = cur;
+                cur->Prev = newN;
+                this->Head = newN;
+            }
+            else
+            {
+                this->Tail = newN;
+                this->Head = this->Tail;
+            }  
+        }
+    }
+   
+    int pop_back()
+    {
+        if(this->Head == nullptr)
+        {
+            throw runtime_error("pop_back: empty list");
+        }
+        Node* cur = this->Tail;
+        if(cur->Prev == nullptr)
+        {
+            this->Head = nullptr;
+            this->Tail = nullptr;
+        }
+        else
+        {
+            Node* next = cur->Prev;
+            this->Tail = next;
+            next->Next = nullptr;
+        }
+        int value = cur->Value;
+        delete cur;
+        return value;
+    }
+    
+    int pop_front()
+    {
+        if(this->Head == nullptr)
+        {
+            throw runtime_error("pop_front: empty list");
+        }
+        Node* cur = this->Head;
+        if(cur->Next == nullptr)
+        {
+            this->Head = nullptr;
+            this->Tail = nullptr;
+        }
+        else
+        {
+            Node* next = cur->Next;
+            this->Head = next;
+            next->Prev = nullptr;
+        }
+        int value = cur->Value;
+        delete cur;
+        return value;
+    }
+   
+    void push_front(int value)
+    {
+   
+        Node* cur = this->Head;
+        Node* newN = new Node();
+        newN->Next = nullptr;
+        newN->Prev = nullptr;
+        newN->Value =value;
+        if(cur != nullptr)
+        {
+            newN->Next = cur;
+            cur->Prev = newN;
+            newN->Prev = nullptr;
+            this->Head = newN;
+        }
+        else
+        {
+           this->Head = newN;
+           this->Tail = this->Head;
+        }
+    }
+    
+    void push_back(int value)
+    {
+       Node* newN = new Node();
+       newN->Next = nullptr;
+       newN->Prev = nullptr;
+       newN->Value = value;
+       Node* cur = this->Tail;
+
+       if (cur != nullptr)
+       {
+          cur->Next = newN;
+          newN->Prev = cur;
+          Tail = newN;
+       }
+
+       else
+       {
+         Tail = newN;
+         Head = Tail;
+       }
+    }
+    
+   
+public:   
+   //
+   // default constructor
+   //
+   // Constructs an integer object and initializes to the value 0.
+   // This function is called automatically when an integer is 
+   // constructed; do not call this function directly.
+   //
+   // pre-condition: an invalid integer object.
+   // post-condition: a properly initialized integer set to 0.
+   // exception: none.
+   //
+   Integer()
+   {
+       this->Head = nullptr;
+       this->Tail = nullptr;
+       push_back(0);
+   }
+
+   //
+   // constructor:
+   //
+   // Constructs this integer based on the digits from the given 
+   // integer string; throws an exception if s is not an integer
+   // strnig.  This function is called automatically when an integer
+   // is constructed; do not call this function directly.
+   //
+   // Example:
+   //   if s = "1234" => integer is 1234
+   //   if s = "oops" => integer is 0 and throws an exception
+   //
+   // pre-condition: an invalid integer object.
+   // post-condition: a properly initialized integer object that has
+   //   the same integer value as implied by the string.
+   // exception: throws invalid_argument if the string is empty or 
+   //   non-numeric, with integer initialized to 0.
+   //
+   Integer(string s)
+   {
+       Head = nullptr;
+       Tail = nullptr;
+       
+       if (s.length() == 0)
+       {
+           free();
+           push_back(0);
+           throw invalid_argument("Integer:the string is empty or non-numeric, with integer initialized to 0");
+       }
+       
+       for (size_t i=0; i<s.length(); i++)
+       {
+           if (!isdigit(s[i]))
+           {
+               free();
+               push_back(0);
+               throw invalid_argument("Integer:the string is empty or non-numeric, with integer initialized to 0");
+           }
+           if (isdigit(s[i]))
+           {
+               push_back(s[i]-'0');
+           }
+       }
+   }
+
+   //
+   // copy constructor
+   //
+   // Constructs this integer via a deep-copy of the other integer.  
+   // This function is called automatically when an integer is 
+   // constructed; do not call this function directly.
+   //
+   // pre-condition: an invalid integer object.
+   // post-condition: a properly initialized integer object that has
+   //   the same integer value as the other integer.
+   // exception: none.
+   //
+   Integer(const Integer& other)
+   {
+       deepCopy(other);
+   }
+
+   //
+   // destructor
+   //
+   // Frees the resources associated with this integer.  This function
+   // is called automatically when an integer is being destroyed; 
+   // do not call this function directly.
+   //
+   // pre-condition: properly initialized integer objects.
+   // post-condition: an invalid integer object.
+   // exception: none.
+   //
+   ~Integer()
+   {
+       free();
+   }
+
+   //
+   // operator=
+   //
+   // Performs a proper C++ assignment of the other integer into
+   // this integer.  This implies the existing integer is freed,
+   // and then a deep-copy of the other integer is made.  This
+   // function is called automatically as part of an assignment
+   // operation involving integer objects; do not call this function
+   // directly.
+   //
+   // pre-condition: properly initialized integer objects.
+   // post-condition: this integer is a deep-copy of the other integer.
+   // exception: none.
+   //
+   Integer& operator=(const Integer& other)
+   {
+      if (this == &other)  // special case: check for i = i;
+         return *this;     // do nothing and just return THIS object back
+
+      //
+      // TODO: free existing integer, then make a deep copy of other
+      //
+      
+      free();
+      deepCopy(other);
+      
+      return *this;  // done, return THIS object back
+   }
+
+   //
+   // toRawStr
+   //
+   // Converts this integer to a string, with no leading zeros.
+   // The string is returned.
+   //
+   // Example:
+   //   if i = 123456 => returns "123456"
+   //   if i = 0 => return "0"
+   //
+   // pre-condition: a properly initialized integer object.
+   // post-condition: integer string is returned with no leading zeros.
+   // exception: none.
+   //
+   string toRawStr()
+   {
+      string s = "";
+      Node* temp = this->Head;
+      Node* temp1 = nullptr;
+      bool x = true;
+      while (x == true)
+      {
+          if(this->Head->Value == 0 && temp->Next != nullptr)
+          {
+               this->Head = temp->Next;
+               temp->Next->Prev = nullptr;
+               temp1 = temp->Next;
+               delete temp;
+               temp = temp1;
+          }
+          else
+          {
+              break;
+          }
+      }
+      
+      Node* cur = this->Head;
+      while (cur != nullptr)
+      {
+          s += to_string(cur->Value);
+          cur = cur->Next;
+      }
+      return s;
+   }
+
+   //
+   // toStr()
+   //
+   // Converts this integer to a string with USA-style commas
+   // inserted at every thousandth location, with no leading 
+   // zeros.  The string is returned.
+   //
+   // Example:
+   //   if i = 123456 => returns "123,456"
+   //   if i = 789 => returns "789"
+   //   if i = 0 => return "0"
+   //
+   // pre-condition: a properly initialized integer object.
+   // post-condition: USA-style integer string is returned, with
+   //   no leading zeros.
+   // exception: none.
+   //
+   string toStr()
+   {
+       string s = "";
+       Node* temp = this->Head;
+       Node* temp1 = nullptr;
+       bool x = true;
+       while (x == true)
+       {
+           if(this->Head->Value == 0 && temp->Next != nullptr)
+           {
+                this->Head = temp->Next;
+                temp->Next->Prev = nullptr;
+                temp1 = temp->Next;
+                delete temp;
+                temp = temp1;
+           }
+           else
+           {
+               break;
+           }
+       }
+       int count = 0;
+       Node* cur= this->Tail;
+       while(cur != nullptr)
+       {
+           count++;
+           s += to_string(cur->Value);
+           if(count%3 == 0 && count != 0)
+           {
+               if (cur->Prev != nullptr)
+                   s += ",";
+               else
+                   break;
+           }
+           cur = cur->Prev;
+       }
+       
+       int a = s.length(),b = a-1,i=0;
+       
+       while (i<(a/2))
+       {
+           swap(s[i],s[b]);
+           b--;
+           i++;
+       }
+      return s;
+   }
+
+   //
+   // add
+   //
+   // Adds the other integer to this integer, in effect computing
+   // this += other.  Nothing is returned, the integer is internally
+   // updated.
+   //
+   // pre-condition: properly initialized integer objects.
+   // post-condition: this integer increased by other integer.
+   // exception: none.
+   //
+   void add(const Integer& other)
+   {
+       Node* temp = this->Tail;
+       Node* temp1 = other.Tail;
+       
+       int pointer = 0;
+       while (temp != nullptr || temp1 != nullptr)
+       {
+           if (temp != nullptr && temp1 != nullptr)
+           {
+               temp->Value += temp1->Value + pointer;
+               if (temp->Value < 10)
+               {
+                   pointer = 0;
+               }
+               else
+               {
+                   temp->Value -= 10;
+                   pointer = 1;
+               }
+               temp = temp->Prev;
+               temp1 = temp1->Prev;
+           }
+           
+           else if (temp != nullptr)
+           {
+               temp->Value += pointer;
+               if (temp->Value <10)
+               {
+                   pointer = 0;
+               }
+               else
+               {
+                   temp->Value -= 10;
+                   pointer = 1;
+               }
+               temp = temp->Prev;
+           }
+           else if (temp1 != nullptr)
+           {
+               push_front(temp1->Value + pointer);
+               if (Head->Value < 10)
+               {
+                   pointer = 0;
+               }
+               else
+               {
+                   Head->Value -= 10;
+                   pointer = 1;
+               }
+               temp1= temp1->Prev;
+           }
+       }
+       
+       if (pointer != 0)
+       {
+           push_front(pointer);
+       }
+   }
+
+   //
+   // shift_left
+   //
+   // Shifts the integer digits left by the given amount N,
+   // in effect multiplying the integer by 10^N.  If the integer
+   // is 0, then the result remains 0.  Nothing is returned, 
+   // the integer is internally updated.
+   //
+   // Example: 
+   //   if i = 1234 then shift_left(i, 2) => 123400
+   //   if i = 0 then shift_left(i, x) => 0
+   //
+   // pre-condition: a properly initialized integer object.
+   // post-condition: if non-zero to start, the integer has 
+   //   N lower-order 0's added.
+   // exception: throws invalid_argument if N < 0.
+   //
+   void shift_left(int N)
+   {
+       Node* temp = this->Head;
+       while (temp != nullptr)
+       {
+           if (Head->Value == 0 && temp->Next != nullptr)
+               pop_front();
+           
+           temp = temp->Next;
+       }
+       Integer L;
+       Node* temp1 = this->Tail;
+       if (N == 0)
+       {
+           
+       }
+       else if (N > 0)
+       {
+           int i=0;
+           while (i < (N-1))
+           {
+               L.push_back(0);
+               i++;
+           }
+           temp1->Next = L.Head;
+           L.Head->Prev = this->Tail;
+           this->Tail = L.Tail;
+           L.Head = nullptr;
+           L.Tail = nullptr;
+           if (Head->Value == 0)
+           {
+               free();
+               push_back(0);
+           }
+       }
+       else
+       {
+           throw invalid_argument ("shift_left: N < 0");
+       }
+   }
+
+   //
+   // shift_right
+   //
+   // Shifts the integer digits right by the given amount N,
+   // in effect dividing the integer by 10^N.  If the integer
+   // contains <= N digits, then the integer is shifted right
+   // until 1 digit remains.  Nothing is returned, the integer
+   // is internally updated.
+   //
+   // Example: 
+   //   if i = 1234 then shift_right(i, 2) => 12
+   //   if i = 1234 then shift_right(i, 4) => 1
+   //   if i = 0 then shift_right(i, x) => 0
+   //
+   // pre-condition: a properly initialized integer object.
+   // post-condition: if non-zero to start, the integer has 
+   //   N lower-order digits removed.
+   // exception: throws invalid_argument if N < 0.
+   //
+   void shift_right(int N)
+   {
+       Node* temp = this->Head;
+       while (temp != nullptr)
+       {
+           if (Head->Value == 0 && temp->Next != nullptr)
+               pop_front();
+           
+           temp = temp->Next;
+       }
+       
+       if (N < 0)
+       {
+           throw invalid_argument ("shift_right: N < 0");
+       }
+       else if (N > 0)
+       {
+           Node* temp1 = this->Tail;
+           Node* temp2 = nullptr;
+           int i=0;
+           while (i < N)
+           {
+               if(temp1->Prev != nullptr)
+               {
+                   temp2 = temp1->Prev;
+                   pop_back();
+                   temp1 = temp2;
+               }
+               i++;
+           }
+       }
+   }
+
+};
