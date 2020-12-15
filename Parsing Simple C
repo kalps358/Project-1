@@ -1,0 +1,1774 @@
+/*main.cpp*/
+
+//
+// main program for testing components of SimpleC parsing project
+//
+// Author: Kalpkumar Shah, UIC, and Fall 2020
+//
+// Originally written by: Prof. Hummel, U. of Illinois Chicago, Fall 2020
+// Project 04
+//
+
+#include <iostream>
+#include <fstream>
+#include <istream>
+#include <string>
+#include <list>
+
+#include "token.h"
+#include "parser.h"
+
+using namespace std;
+
+
+//
+// inputSimpleC
+//
+// Inputs a SimpleC program from either a file or the keyboard.
+// If the filename != "" then we try to open the file; if filename
+// is "" then we assume keyboard input via cin; the user can 
+// simulate EOF on a keyboard via Ctrl-D on Linux or Ctrl-Z then 
+// ENTER on Windows.
+//
+// Pre-condition: filename is "" or a filename containing a 
+// SimpleC program.
+//
+// Post-condition: a list of SimpleC tokens is returned.  If a
+// filename was specified and the file could not be opened, an
+// error message is output and an empty list is returned.
+//
+list<Token> inputSimpleC(string filename)
+{
+   Token        T;
+   list<Token>  tokens;
+   int          line, col;
+
+   line = 1;
+   col = 1;
+
+   //
+   // if the filename is "", we use cin as our input stream:
+   //
+   if (filename == "")
+   {
+      T = nextToken(cin, line, col);
+
+      while (T.ID != TokenID::EOS)
+      {
+         tokens.push_back(T);
+
+         T = nextToken(cin, line, col);
+      }
+
+      tokens.push_back(T);  // EOS
+   }
+   else
+   {
+      //
+      // we use the contents of the file as input stream:
+      //
+      ifstream infile(filename);
+
+      if (!infile.good())
+      {
+         cout << "**Error, unable to open input file '" << filename << "'" << endl;
+         return tokens;  // empty list:
+      }
+
+      T = nextToken(infile, line, col);
+
+      while (T.ID != TokenID::EOS)
+      {
+         tokens.push_back(T);
+
+         T = nextToken(infile, line, col);
+      }
+
+      tokens.push_back(T);  // EOS
+   }
+
+   //
+   // return tokens back to caller:
+   //
+   return tokens;
+}
+
+
+
+//
+// main
+//
+int main()
+{
+   list<Token>  tokens;
+   string       filename, answer, nonterminal;
+   bool         outputTokens, success, trace;
+
+   //
+   // testing inputs:
+   //
+   cout << "Output tokens? (yes or no) ";
+   getline(cin, answer);
+
+   outputTokens = (answer == "yes");
+
+   cout << "Which non-terminal to parse? (or none) ";
+   getline(cin, nonterminal);
+
+   cout << "Trace the parse? (yes or no) ";
+   getline(cin, answer);
+
+   trace = (answer == "yes");
+
+   //
+   // Now input all the tokens into a list:
+   //
+   cout << "Enter a SimpleC filename (or press ENTER for keyboard input): ";
+   getline(cin, filename);
+
+   tokens = inputSimpleC(filename);
+
+   if (tokens.size() == 0)  // no tokens, end program:
+   {
+      // error msg about file would have already been output:
+
+      return 0;
+   }
+
+   //
+   // Let's output the tokens out to the console to make sure things
+   // are working:
+   //
+   cout << endl;
+
+   if (outputTokens)
+   {
+      for (Token T : tokens)  // for each token T in the list:
+      {
+         cout << T << endl;
+      }
+
+      cout << endl;
+   }
+
+   //
+   // Okay, let's parse the based on the non-terminal that was input:
+   //
+   if (nonterminal == "none")
+   {
+      return 0;
+   }
+
+   cout << "Parsing @ <" << nonterminal << ">..." << endl;
+
+   if (nonterminal == "simplec")
+      success = simplec(tokens, trace);
+   else if (nonterminal == "stmts")
+     success = stmts(tokens, trace);
+   else if (nonterminal == "stmt")
+      success = stmt(tokens, trace);
+   else if (nonterminal == "missing")
+      success = missing(tokens, trace);
+   else if (nonterminal == "vardecl")
+      success = vardecl(tokens, trace);
+   else if (nonterminal == "input")
+      success = input(tokens, trace);
+   else if (nonterminal == "output")
+      success = output(tokens, trace);
+   else if (nonterminal == "output_elem")
+      success = output_elem(tokens, trace);
+   else if (nonterminal == "more_elems")
+     success = more_elems(tokens, trace);
+   else if (nonterminal == "assignment")
+      success = assignment(tokens, trace);
+   else if (nonterminal == "block")
+      success = block(tokens, trace);
+   else if (nonterminal == "whileloop")
+      success = whileloop(tokens, trace);
+   else if (nonterminal == "ifthenelse")
+      success = ifthenelse(tokens, trace);
+   else if (nonterminal == "elseblock")
+      success = elseblock(tokens, trace);
+   else if (nonterminal == "expr")
+      success = expr(tokens, trace);
+   else if (nonterminal == "term")
+     success = term(tokens, trace);
+   else if (nonterminal == "oper")
+     success = oper(tokens, trace);
+   else
+   {
+      cout << "**Internal error: unknown non-terminal '" << nonterminal << "'" << endl;
+      return 0;
+   }
+
+   if (success)
+   {
+      cout << "Success, no syntax errors" << endl;
+   }
+   else
+   {
+      cout << "Failed due to syntax error" << endl;
+   }
+
+   //
+   // done
+   //
+   return 0;
+}
+
+
+
+
+
+
+
+
+
+
+/*token.cpp*/
+
+//
+// nextToken function needed for parsing of SimpleC programming language
+//
+// Author: Kalpkumar Shah, UIC, and Fall 2020
+//
+// Originally written by: Prof. Hummel, U. of Illinois Chicago, Fall 2020
+// Project 04
+//
+
+#include <iostream>
+#include <istream>
+#include <string>
+#include <cctype>  // isdigit, isalpha
+
+#include "token.h"
+
+using namespace std;
+
+
+//
+// overload << for Token so we can output tokens easily for debugging:
+//
+ostream& operator<<(ostream& os, const Token& T)
+{
+   os << "Token(" << T.ID << "," << T.Value << "," << T.Line << "," << T.Col << ")";
+   return os;
+}
+
+
+//
+// nextToken
+//
+// Summary: finds and returns the next SimpleC token as 
+// defined in "token.h" and by the SimpleC programming 
+// language.  If the input stream does not contain another
+// token, TokenID::EOS (End-Of-Stream) is returned.  The
+// longest possible token is always returned, e.g. the 
+// input ">=" would be returned as TokenID::GTE instead
+// of TokenID::GT followed by TokenID::EQUAL.  If the input
+// stream contains a character that is not recognized as 
+// part of SimpleC, TokenID::UNKNOWN is returned with 
+// the token's value set to the unknown character.
+//
+// Pre-condition: input must be an open stream denoting
+// the source of tokens, with line and col set to current 
+// line and column position in this stream.
+//
+// Post-condition: input stream is advanced based on token 
+// that is returned, with line and col advanced similarly.
+//
+Token nextToken(istream& input, int& line, int& col)
+{
+   Token T;
+   int   c;
+   
+   c = input.peek();  // look ahead at the next char:
+
+   
+   //
+   // TODO!
+   //
+   if (c == EOF)  // end of stream:
+   {
+      T.ID = TokenID::EOS;
+      
+      T.Value = "$";
+      T.Line  = line;
+      T.Col   = col;
+      return T;
+   }
+   
+   else if (c == ';') // check for semicolon
+   {
+       c = input.get();
+       T.ID = TokenID::SEMICOLON;
+       
+       T.Value = ";";
+       T.Line  = line;
+       T.Col   = col;
+       col++;
+       return T;
+   }
+   else if (c == '(') // check for left parenthesis
+   {
+       c = input.get();
+       T.ID = TokenID::LEFT_PAREN;
+       
+       T.Value = "(";
+       T.Line  = line;
+       T.Col   = col;
+       col++;
+       return T;
+   }
+   else if (c == ')') // check for right parenthesis
+   {
+       c = input.get();
+       T.ID = TokenID::RIGHT_PAREN;
+       
+       T.Value = ")";
+       T.Line  = line;
+       T.Col   = col;
+       col++;
+       return T;
+   }
+   else if (c == '{') // check for left braces
+   {
+       c = input.get();
+       T.ID = TokenID::LEFT_BRACE;
+       
+       T.Value = "{";
+       T.Line = line;
+       T.Col = col;
+       col++;
+       return T;
+   }
+   else if (c == '}') // check for right braces
+   {
+       c = input.get();
+       T.ID = TokenID::RIGHT_BRACE;
+       
+       T.Value = "}";
+       T.Line = line;
+       T.Col = col;
+       col++;
+       return T;
+   }
+   else if (c == '+') // check for a plus sign
+   {
+       c = input.get();
+       T.ID = TokenID::PLUS;
+       
+       T.Value = "+";
+       T.Line = line;
+       T.Col = col;
+       col++;
+       return T;
+   }
+   else if (c == '-') // check for a minus sign
+   {
+       c = input.get();
+       T.ID = TokenID::MINUS;
+       
+       T.Value = "-";
+       T.Line = line;
+       T.Col = col;
+       col++;
+       return T;
+   }
+   else if (c == '*') // check for a multiplication sign
+   {
+       c = input.get();
+       T.ID = TokenID::MULT;
+       
+       T.Value = "*";
+       T.Line = line;
+       T.Col = col;
+       col++;
+       return T;
+   }
+   else if (c == '/') // check for a division sign
+   {
+       c = input.get();
+       c = input.peek();
+       
+       if (c == '/') // check again if it is a comment
+       {
+           //
+           // works same as "\n" where it skips the line and call nextToken function
+           //
+           while(c != '\n') // if true then ignores the comments
+           {
+               c = input.get();
+           }
+           line++;
+           col = 1;
+           T = nextToken(input, line, col);
+       }
+       else // check for a division sign
+       {
+           T.ID = TokenID::DIV;
+       
+           T.Value = "/";
+           T.Line = line;
+           T.Col = col;
+           col++;
+           return T;
+       }
+   }
+   else if (c == '%') // check for a modulus sign
+   {
+       c = input.get();
+       T.ID = TokenID::MOD;
+       
+       T.Value = "%";
+       T.Line = line;
+       T.Col = col;
+       col++;
+       return T;
+   }
+   else if (c == '>') // check for a greater than sign
+   {
+       c = input.get();
+       c = input.peek(); // look again if it is attched by more characters
+       
+       if (c == '>') // check if the characters are both ">>" then it is an input
+       {
+           c = input.get();
+           T.ID = TokenID::INPUT;
+       
+           T.Value = ">>";
+           T.Line = line;
+           T.Col = col;
+           col += 2;
+           return T;
+       }
+       else if (c == '=') // check if the characters are ">=" then it is greater than equals
+       {
+           c = input.get();
+           T.ID = TokenID::GTE;
+       
+           T.Value = ">=";
+           T.Line = line;
+           T.Col = col;
+           col += 2;
+           return T;
+       }
+       else // it is for only greater than symbol
+       {
+           T.ID = TokenID::GT;
+       
+           T.Value = ">";
+           T.Line = line;
+           T.Col = col;
+           col++;
+           return T;
+       }
+   }
+   else if (c == '<') // check for a smaller than sign 
+   {
+       c = input.get();
+       c = input.peek();
+       
+       if (c == '=') // check if the characters are "<=" then it is less than equals
+       {
+           c = input.get();
+           T.ID = TokenID::LTE;
+       
+           T.Value = "<=";
+           T.Line = line;
+           T.Col = col;
+           col += 2;
+           return T;
+       }
+       else if (c == '<') // check if the characters are both "<<" then it is an output
+       {
+           c = input.get();
+           T.ID = TokenID::OUTPUT;
+       
+           T.Value = "<<";
+           T.Line = line;
+           T.Col = col;
+           col += 2;
+           return T;
+       }
+       else// it is for only less than symbol
+       {
+           T.ID = TokenID::LT;
+       
+           T.Value = "<";
+           T.Line = line;
+           T.Col = col;
+           col++;
+           return T;
+       }
+   }
+   else if (c == '=') // check for a equals sign 
+   {
+       c = input.get();
+       c = input.peek();
+       
+       if (c == '=') // if both the caracters are "==" than it is equals-equals
+       {
+           c = input.get();
+           T.ID = TokenID::EQUAL_EQUAL;
+       
+           T.Value = "==";
+           T.Line = line;
+           T.Col = col;
+           col += 2;
+           return T;
+       }
+       else // it is for equal sign
+       {
+           T.ID = TokenID::EQUAL;
+       
+           T.Value = "=";
+           T.Line = line;
+           T.Col = col;
+           col++;
+           return T;
+       }
+   }
+   else if (c == '!')
+   {
+       c = input.get();
+       c = input.peek();
+       
+       if (c == '=') // if both the caracters are "!=" than it is not-equals
+       {
+           c = input.get();
+           T.ID = TokenID::NOT_EQUAL;
+       
+           T.Value = "!=";
+           T.Line = line;
+           T.Col = col;
+           col += 2;
+           return T;
+       }
+       else // it is for not sign
+       {
+           T.ID = TokenID::UNKNOWN;
+       
+           T.Value = "!";
+           T.Line = line;
+           T.Col = col;
+           col++;
+           return T;
+       }
+   }
+   //
+   // integer literals start
+   //
+   else if (isdigit(char(c))) // check if the character is a number
+   {
+       c = input.get();
+       string pointer;
+       pointer += c;
+       c = input.peek();
+       while(isdigit(char(c)))
+       {
+           c = input.get();
+           pointer += char(c);
+           c = input.peek();
+       }
+       T.ID = TokenID::INT_LITERAL;
+       
+       T.Value = pointer;
+       T.Line = line;
+       T.Col = col;
+       col += pointer.size();
+       return T;
+   }
+   //
+   // end of integer literals
+   //
+    
+   //
+   // string literals start
+   // 
+   else if (c == '"') // check if the statements are written within quotes
+   {
+       c = input.get();
+       string pointer;
+       pointer += c;
+       c = input.peek();
+       while(c != '"')
+       {
+           c = input.get();
+           pointer += char(c);
+           c = input.peek();
+       }
+       c = input.get();
+       pointer += c;
+       
+       T.ID = TokenID::STR_LITERAL;
+       
+       T.Value = pointer;
+       T.Line = line;
+       T.Col = col;
+       col += pointer.size();
+       return T;
+   }
+   //
+   // end of string literals
+   //
+    
+   //
+   // identifier start
+   //
+   else if (isalpha(char(c)) || isdigit(char(c)) || c == '_') // check for the given condition
+   {
+       c = input.get();
+       string pointer;
+       pointer += c;
+       c = input.peek();
+       while(isalpha(char(c)) || isdigit(char(c)) || c == '_')
+       {
+           c = input.get();
+           pointer += char(c);
+           c = input.peek();
+       }
+       
+           //
+           // checking for the keywords starts
+           //
+       
+            if (pointer == "void") // check if the keyword is void
+            {
+                T.ID = TokenID::VOID_KEYW;
+                T.Value = "void";
+                T.Line = line;
+                T.Col  = col;
+                col += 4;
+                return T;
+            }
+            else if (pointer == "main") // check if the keyword is main
+            {
+                T.ID = TokenID::MAIN_KEYW;
+                T.Value = "main";
+                T.Line = line;
+                T.Col  = col;
+                col += 4;
+                return T;
+            }
+            else if (pointer =="int") // check if the keyword is integer
+            {
+                T.ID = TokenID::INT_KEYW;
+                T.Value = "int";
+                T.Line = line;
+                T.Col  = col;
+                col += 3;
+                return T;
+            }
+           
+            else if(pointer == "cin") // check if the keyword is cin
+            {
+               T.ID = TokenID::CIN_KEYW;
+               T.Value = "cin";
+               T.Line = line;
+               T.Col  = col;
+               col += 3;
+               return T;
+            }
+           
+            else if(pointer =="cout") // check if the keyword is cout
+            {
+                T.ID = TokenID::COUT_KEYW;
+                T.Value = "cout";
+                T.Line = line;
+                T.Col  = col;
+                col += 4;
+                return T;
+            }
+           
+            else if(pointer == "endl")  // check if the keyword is endl
+            {
+                T.ID = TokenID::ENDL_KEYW;
+                T.Value = "endl";
+                T.Line = line;
+                T.Col  = col;
+                col += 4;
+                return T;
+            }
+           
+            else if(pointer =="while")  // check if the keyword is while
+            {
+                T.ID = TokenID::WHILE_KEYW;
+                T.Value = "while";
+                T.Line = line;
+                T.Col  = col;
+                col += 5;
+                return T;
+            }
+           
+            else if(pointer =="if") // check if the keyword is if
+            {
+                T.ID = TokenID::IF_KEYW;
+                T.Value = "if";
+                T.Line = line;
+                T.Col  = col;
+                col += 2;
+                return T;
+            }
+           
+            else if(pointer =="else")  // check if the keyword is else
+            {
+                T.ID = TokenID::ELSE_KEYW;
+                T.Value = "else";
+                T.Line = line;
+                T.Col  = col;
+                col += 4;
+                return T;
+            }
+           
+            //
+            // contine for the identifier
+            //
+       
+            T.ID = TokenID::IDENTIFIER;
+       
+            T.Value = pointer;
+            T.Line  = line;
+            T.Col   = col;
+            col += pointer.size(); 
+            return T;
+   }
+    
+   //
+   // end of identifier
+   //
+    
+   else if (c == ' ' ||
+            c == '\t' ||
+            c == '\r' ||
+            c == '\f')      // check for the given condition
+   {
+       c = input.get();
+       col++;
+       T = nextToken(input, line, col);
+   }
+   else if (c == '\n') // check for the '\n' symbol to skip the line
+   {
+       c = input.get();
+       line++;
+       col = 1;
+       T = nextToken(input, line, col);
+   }
+   else  // unknown char => UNKNOWN token:
+   {
+      c = input.get();  // consume char
+      
+      T.ID = TokenID::UNKNOWN;
+      
+      T.Value  = "";
+      T.Value += static_cast<char>(c);
+      T.Line   = line;
+      T.Col    = col;
+      col++;
+      return T;
+   }
+   return T;
+}
+
+
+
+
+
+
+
+
+
+
+
+/*parser.cpp*/
+
+//
+// Recursive-descent parsing functions for SimpleC programming language
+//
+// Author: Kalpkumar Shah, UIC, and Fall 2020
+//
+// Originally written by: Prof. Hummel, U. of Illinois Chicago, Fall 2020
+// Project 04
+//
+
+#include <iostream>
+#include <istream>
+#include <string>
+#include <list>
+
+#include "token.h"
+#include "parser.h"
+
+using namespace std;
+
+
+//
+// recursive-descent functions:
+//
+
+//
+// <simplec> ::= void main ( ) <block> $
+//
+bool simplec(list<Token>& tokens, bool trace)
+{
+   if (trace)
+   {
+      cout << "<simplec>" << endl;
+   }
+   Token T = tokens.front();
+   if (T.ID != TokenID::VOID_KEYW) // if it is not equal to the void keyword
+   {
+       cout << "Syntax error: expecting 'void', found '" << T.Value << "' @ (" << T.Line << ", " << T.Col << ")" << endl;
+       return false;
+   }
+   tokens.pop_front();    
+   T = tokens.front();
+   if (T.ID != TokenID::MAIN_KEYW) // if it is not equal to the main keyword
+   {
+       cout << "Syntax error: expecting 'main', found '" << T.Value << "' @ (" << T.Line << ", " << T.Col << ")" << endl;
+       return false;
+   }
+   tokens.pop_front();    
+   T = tokens.front();
+   if (T.ID != TokenID::LEFT_PAREN) // if it is not equal to the LEFT_PAREN
+   {
+       cout << "Syntax error: expecting '(', found '" << T.Value << "' @ (" << T.Line << ", " << T.Col << ")" << endl;
+       return false;
+   }
+   tokens.pop_front();
+   T = tokens.front();
+   if (T.ID != TokenID::RIGHT_PAREN) // if it is not equal to the RIGHT_PAREN
+   {
+       cout << "Syntax error: expecting ')', found '" << T.Value << "' @ (" << T.Line << ", " << T.Col << ")" << endl;
+       return false;
+   }
+   tokens.pop_front();   
+   if(!block(tokens, trace)) // if it is not equal to block function
+   {
+       return false;
+   }
+   T = tokens.front();
+   if (T.ID != TokenID::EOS) // if it is not equal to the EOS
+   {
+       cout << "Syntax error: expecting 'EOS', found '" << T.Value << "' @ (" << T.Line << ", " << T.Col << ")" << endl;
+       return false;
+   }
+   tokens.pop_front();
+    
+   //
+   // TODO:
+   //
+
+   return true;
+}
+
+//
+// <stmts> ::= <stmt> <stmts>
+//            | EMPTY
+//
+bool stmts(list<Token>& tokens, bool trace)
+{
+   if (trace)
+   {
+      cout << "<stmts>" << endl;
+   }
+   
+   Token T = tokens.front();
+    //
+    // Check for the keywords and identifier
+    // Also check for if they are not equal to stmt and stmts
+    //
+    
+    if (T.ID == TokenID::IDENTIFIER ||T.ID == TokenID::SEMICOLON ||T.ID == TokenID::INT_KEYW||T.ID == TokenID::CIN_KEYW||T.ID == TokenID::COUT_KEYW||T.ID == TokenID::LEFT_BRACE||T.ID == TokenID::WHILE_KEYW||T.ID == TokenID::IF_KEYW)
+    {
+        if (!stmt(tokens, trace)) // check if stmt function value is not found
+        {
+            return false;
+        }
+        if (!stmts(tokens, trace)) // check if stmts function value is not found
+        {
+            return false;
+        }
+    }
+   
+    return true;
+}
+
+//
+// <stmt> ::= <missing>
+//          | <vardecl>
+//          | <input>
+//          | <output>
+//          | <assignment>
+//          | <block>
+//          | <whileloop>
+//          | <ifthenelse>
+//
+bool stmt(list<Token>& tokens, bool trace)
+{
+   if (trace)
+   {
+      cout << "<stmt>" << endl;
+   }
+   
+   Token T = tokens.front();
+   
+   if(T.ID == TokenID::SEMICOLON) // if it is equal to the SEMICOLON
+   {
+       if (!missing(tokens, trace)) // check if it is not equal to missing function
+       {
+           return false;
+       }
+   }
+   else if (T.ID == TokenID::INT_KEYW) // if it is equal to the INT_KEYW
+   {
+       if (!vardecl(tokens, trace)) // check if it is not equal to vardecl function
+       {
+           return false;
+       }
+   }
+   else if (T.ID == TokenID::CIN_KEYW) // if it is equal to the CIN_KEYW
+   {
+       if (!input(tokens, trace)) // if it is not equal to input function
+       {
+           return false;
+       }
+   }
+   else if (T.ID == TokenID::COUT_KEYW) // if it is equal to the COUT_KEYW
+   {
+       if (!output(tokens, trace)) // if it is not equal to output function
+       {
+           return false;
+       }
+   }
+   else if (T.ID == TokenID::IDENTIFIER) // if it is equal to the IDENTIFIER
+   {
+       if (!assignment(tokens, trace)) // if it is not equal to assignment function
+       {
+           return false;
+       }
+   }
+   else if (T.ID == TokenID::LEFT_BRACE) // if it is equal to the LEFT_BRACE
+   {
+       if (!block(tokens, trace)) // if it is not equal to block function
+       {
+           return false;
+       }
+   }
+   else if (T.ID == TokenID::WHILE_KEYW) // if it is equal to the WHILE_KEYW
+   {
+       if (!whileloop(tokens, trace)) // if it is not equal to whileloop function
+       {
+           return false;
+       }
+   }
+   else if (T.ID == TokenID::IF_KEYW) // if it is equal to the IF_KEYW
+   {
+       if (!ifthenelse(tokens, trace)) // if it is not equal to ifthenelse function
+       {
+           return false;
+       }
+   }
+   else // if all above are flase print the statement for 'stmt'
+   {
+      cout << "Syntax error: expecting 'stmt', found '" << T.Value << "' @ (" << T.Line << ", " << T.Col << ")" << endl;
+      return false;
+   }
+   
+   //
+   // TODO:
+   //
+
+   return true;
+}
+
+
+//
+// <missing> ::= ;
+//
+bool missing(list<Token>& tokens, bool trace)
+{
+   if (trace)
+   {
+      cout << "<missing>" << endl;
+   }
+   
+   Token T = tokens.front();
+   if (T.ID == TokenID::SEMICOLON) // if it is equal to the SEMICOLON
+   {
+       tokens.pop_front();
+       return true;
+   }
+   else // if the above if is false print the statement for ';'
+   {
+      cout << "Syntax error: expecting ';', found '" << T.Value << "' @ (" << T.Line << ", " << T.Col << ")" << endl;
+      return false;
+   }
+
+   //
+   // TODO:
+   //
+   return true;
+}
+
+
+//
+// <vardecl> ::= int IDENTIFIER ;
+//
+bool vardecl(list<Token>& tokens, bool trace)
+{
+   if (trace)
+   {
+      cout << "<vardecl>" << endl;
+   }
+   
+   Token T = tokens.front();
+   if (T.ID != TokenID::INT_KEYW) // if it is not equal to the INT_KEYW
+   {
+       cout << "Syntax error: expecting 'int', found '" << T.Value << "' @ (" << T.Line << ", " << T.Col << ")" << endl;
+       return false;
+   }
+   tokens.pop_front();
+    
+   T = tokens.front();
+   if (T.ID != TokenID::IDENTIFIER) // if it is not equal to the IDENTIFIER
+   {
+       cout << "Syntax error: expecting 'IDENTIFIER', found '" << T.Value << "' @ (" << T.Line << ", " << T.Col << ")" << endl;
+       return false;
+   } 
+   tokens.pop_front();
+   
+   T = tokens.front();
+   if (T.ID != TokenID::SEMICOLON) // if it is not equal to the SEMICOLON
+   {
+       cout << "Syntax error: expecting ';', found '" << T.Value << "' @ (" << T.Line << ", " << T.Col << ")" << endl;
+       return false;
+   }
+   tokens.pop_front();
+   //
+   // TODO:
+   //
+
+   return true;
+}
+
+
+//
+// <input> ::= cin >> IDENTIFIER ;
+//
+bool input(list<Token>& tokens, bool trace)
+{
+   if (trace)
+   {
+      cout << "<input>" << endl;
+   }
+    
+   Token T = tokens.front();
+   if (T.ID != TokenID::CIN_KEYW) // if it is not equal to the CIN_KEYW
+   {
+       cout << "Syntax error: expecting 'cin', found '" << T.Value << "' @ (" << T.Line << ", " << T.Col << ")" << endl;
+       return false;
+   }
+   tokens.pop_front();
+   
+   T = tokens.front();
+   if (T.ID != TokenID::INPUT) // if it is not equal to the INPUT
+   {
+       cout << "Syntax error: expecting '>>', found '" << T.Value << "' @ (" << T.Line << ", " << T.Col << ")" << endl;
+       return false;
+   }
+   tokens.pop_front();
+    
+   T = tokens.front();
+   if (T.ID != TokenID::IDENTIFIER) // if it is not equal to the IDENTIFIER
+   {
+       cout << "Syntax error: expecting 'IDENTIFIER', found '" << T.Value << "' @ (" << T.Line << ", " << T.Col << ")" << endl;
+       return false;
+   }
+   tokens.pop_front();
+   
+   T = tokens.front();
+   if (T.ID != TokenID::SEMICOLON) // if it is not equal to the SEMICOLON
+   {
+       cout << "Syntax error: expecting ';', found '" << T.Value << "' @ (" << T.Line << ", " << T.Col << ")" << endl;
+       return false;
+   }
+   tokens.pop_front();
+   //
+   // TODO:
+   //
+
+   return true;
+}
+
+
+//
+// <output> ::= cout << <output_elem> <more_elems>;
+//
+bool output(list<Token>& tokens, bool trace)
+{
+   if (trace)
+   {
+      cout << "<output>" << endl;
+   }
+   Token T = tokens.front();
+   if (T.ID != TokenID::COUT_KEYW) // if it is not equal to the COUT_KEYW
+   {
+       cout << "Syntax error: expecting 'cout', found '" << T.Value << "' @ (" << T.Line << ", " << T.Col << ")" << endl;
+       return false;
+   }
+   tokens.pop_front();
+//    T = tokens.front();
+    
+//    if (T.ID != TokenID::OUTPUT) // if it is not equal to the INPUT
+//    {
+//        cout << "Syntax error: expecting '<<', found '" << T.Value << "' @ (" << T.Line << ", " << T.Col << ")" << endl;
+//        return false;
+//    }
+    
+   if (!output_elem(tokens, trace)) // if it is not equal to output_elem function
+   {
+       return false;
+   }
+   
+   if (!more_elems(tokens, trace)) // if it is not equal to more_elems function
+   {
+       return false;
+   }
+    
+   T = tokens.front();
+   if (T.ID != TokenID::SEMICOLON) // if it is not equal to the SEMICOLON
+   {
+       cout << "Syntax error: expecting ';', found '" << T.Value << "' @ (" << T.Line << ", " << T.Col << ")" << endl;
+       return false;
+   }
+   tokens.pop_front();
+   //
+   // TODO:
+   //
+
+   return true;
+}
+
+
+//
+// <output_elem> ::= << <expr>
+//                 | << endl
+//
+bool output_elem(list<Token>& tokens, bool trace)
+{
+   if (trace)
+   {
+      cout << "<output_elem>" << endl;
+   }
+
+   Token T = tokens.front();
+   if (T.ID != TokenID::OUTPUT) // if it is not equal to the OUTPUT
+   {
+       cout << "Syntax error: expecting '<<', found '" << T.Value << "' @ (" << T.Line << ", " << T.Col << ")" << endl;
+       return false;
+   }
+   tokens.pop_front();
+   T = tokens.front();
+   if(T.ID == TokenID::IDENTIFIER || T.ID == TokenID::INT_LITERAL || T.ID == TokenID::STR_LITERAL || T.ID == TokenID::LEFT_PAREN) // if it is equal to the IDENTIFIER OR INT_LITERAL OR STR_LITERAL
+   {
+       if (!expr(tokens, trace)) // if it is not equal to expr function
+       {
+           return false;
+       }
+       return true;
+   }
+   else if (T.ID == TokenID::ENDL_KEYW)  // if it is equal to the ENDL_KEYW
+   {
+       if (T.ID != TokenID::ENDL_KEYW)  // if it is not equal to the ENDL_KEYW
+       {
+           cout << "Syntax error: expecting 'endl', found '" << T.Value << "' @ (" << T.Line << ", " << T.Col << ")" << endl;
+           return false; 
+       }
+       tokens.pop_front();
+       return true;
+   }
+   
+   else
+   {
+       cout << "Syntax error: expecting 'term', found '" << T.Value << "' @ (" << T.Line << ", " << T.Col << ")" << endl;
+       return false;
+   }
+    
+   return false;
+   
+   //
+   // TODO:
+   //
+}
+
+//
+// <more_elems> ::= <output_elem> <more_elems>
+//                | EMPTY
+bool more_elems(list<Token>& tokens, bool trace)  
+{
+   if (trace)
+   {
+      cout << "<more_elems>" << endl;
+   }
+   
+    Token T = tokens.front();
+   
+    if (T.ID == TokenID::OUTPUT) // check if the first input is for "<<"
+    {
+        if(!output_elem(tokens,trace)) // check if output_elem is not found
+        {
+            return false;
+        }
+        if(!more_elems(tokens,trace)) // check if more_elems is not found
+        {
+            return false;
+        }
+    }
+       
+    return true;                        
+}
+
+//
+// <assignment> ::= IDENTIFIER = <expr> ;
+//
+bool assignment(list<Token>& tokens, bool trace)
+{
+   if (trace)
+   {
+      cout << "<assignment>" << endl;
+   }
+
+   Token T = tokens.front();
+   if (T.ID != TokenID::IDENTIFIER) // if it is not equal to the IDENTIFIER
+   {
+       cout << "Syntax error: expecting 'IDENTIFIER', found '" << T.Value << "' @ (" << T.Line << ", " << T.Col << ")" << endl;
+       return false;
+   }
+   tokens.pop_front();
+   
+   T = tokens.front();
+   if (T.ID != TokenID::EQUAL) // if it is not equal to the EQUAL
+   {
+       cout << "Syntax error: expecting '=', found '" << T.Value << "' @ (" << T.Line << ", " << T.Col << ")" << endl;
+       return false;
+   }
+   tokens.pop_front();
+    
+   if(!expr(tokens, trace)) // if it is not equal to expr function
+   {
+       return false;
+   }
+    
+   T = tokens.front();
+   if (T.ID != TokenID::SEMICOLON) // if it is not equal to the SEMICOLON
+   {
+       cout << "Syntax error: expecting ';', found '" << T.Value << "' @ (" << T.Line << ", " << T.Col << ")" << endl;
+       return false;
+   }
+   tokens.pop_front();
+   //
+   // TODO:
+   //
+    
+   return true;
+}
+
+
+//
+// <block> ::= { <stmts> }
+//
+bool block(list<Token>& tokens, bool trace)
+{
+   if (trace)
+   {
+      cout << "<block>" << endl;
+   }
+
+   Token T = tokens.front();
+   if (T.ID != TokenID::LEFT_BRACE) // if it is not equal to the LEFT_BRACE
+   {
+       cout << "Syntax error: expecting '{', found '" << T.Value << "' @ (" << T.Line << ", " << T.Col << ")" << endl;
+       return false;
+   }
+   tokens.pop_front();
+   if(!stmts(tokens, trace)) // if it is not equal to stmts function
+   {
+       return false;
+   }
+    
+   T = tokens.front();
+   if (T.ID != TokenID::RIGHT_BRACE) // if it is not equal to the RIGHT_BRACE
+   {
+       cout << "Syntax error: expecting '}', found '" << T.Value << "' @ (" << T.Line << ", " << T.Col << ")" << endl;
+       return false;
+   }
+   tokens.pop_front();
+
+   //
+   // TODO:
+   //
+
+   return true;
+}
+
+
+//
+// <whileloop> ::= while ( <expr> ) <block>
+//
+bool whileloop(list<Token>& tokens, bool trace)
+{
+   if (trace)
+   {
+      cout << "<whileloop>" << endl;
+   }
+
+   Token T = tokens.front();
+   if (T.ID != TokenID::WHILE_KEYW) // if it is not equal to the WHILE_KEYW
+   {
+       cout << "Syntax error: expecting 'while', found '" << T.Value << "' @ (" << T.Line << ", " << T.Col << ")" << endl;
+       return false;
+   }
+   tokens.pop_front();
+    
+   T = tokens.front();
+   if (T.ID != TokenID::LEFT_PAREN) // if it is not equal to the LEFT_PAREN
+   {
+       cout << "Syntax error: expecting '(', found '" << T.Value << "' @ (" << T.Line << ", " << T.Col << ")" << endl;
+       return false;
+   }
+   tokens.pop_front();
+    
+   if(!expr(tokens ,trace)) // if it is not equal to expr function
+   {
+       return false;
+   }
+   
+   T = tokens.front();
+   if (T.ID != TokenID::RIGHT_PAREN) // if it is not equal to the RIGHT_PAREN
+   {
+       cout << "Syntax error: expecting ')', found '" << T.Value << "' @ (" << T.Line << ", " << T.Col << ")" << endl;
+       return false;
+   }
+   tokens.pop_front();
+    
+      
+   if(!block(tokens ,trace)) // if it is not equal to block function
+   {
+       return false;
+   }
+   
+   //
+   // TODO:
+   //
+
+   return true;
+}
+
+
+//
+// <ifthenelse> ::= if ( <expr> ) <block> <elseblock>
+//
+bool ifthenelse(list<Token>& tokens, bool trace)
+{
+   if (trace)
+   {
+      cout << "<ifthenelse>" << endl;
+   }
+
+   Token T = tokens.front();
+   if (T.ID != TokenID::IF_KEYW) // if it is not equal to the IF_KEYW
+   {
+       cout << "Syntax error: expecting 'if', found '" << T.Value << "' @ (" << T.Line << ", " << T.Col << ")" << endl;
+       return false;
+   }
+   tokens.pop_front();
+   
+   T = tokens.front();
+   if (T.ID != TokenID::LEFT_PAREN) // if it is not equal to the LEFT_PAREN
+   {
+       cout << "Syntax error: expecting '(', found '" << T.Value << "' @ (" << T.Line << ", " << T.Col << ")" << endl;
+       return false;
+   }
+   tokens.pop_front();
+    
+   if(!expr(tokens, trace)) // if it is not equal to expr function
+   {
+       return false;
+   }
+    
+   T = tokens.front();
+   if (T.ID != TokenID::RIGHT_PAREN) // if it is not equal to the RIGHT_PAREN
+   {
+       cout << "Syntax error: expecting ')', found '" << T.Value << "' @ (" << T.Line << ", " << T.Col << ")" << endl;
+       return false;
+   }
+   tokens.pop_front();
+    
+   if(!block(tokens, trace)) // if it is not equal to block function
+   {
+       return false;
+   }
+    
+   if(!elseblock(tokens, trace)) // if it is not equal to elseblock function
+   {
+       return false;
+   }
+   //
+   // TODO:
+   //
+
+   return true;
+}
+
+
+//
+// <elseblock> ::= else <block>
+//               | EMPTY
+//
+bool elseblock(list<Token>& tokens, bool trace)
+{
+   if (trace)
+   {
+      cout << "<elseblock>" << endl;
+   }
+
+   Token T = tokens.front();
+   if (T.ID == TokenID::ELSE_KEYW) // if it is equal to the ELSE_KEYW
+   {
+       tokens.pop_front();
+       if (!block(tokens, trace)) // if it is not equal to expr function
+       {
+            return false;   
+       }
+   }
+   //
+   // TODO:
+   //
+
+   return true;
+}
+
+
+//
+// <expr> ::= <term> <oper> <expr>
+//          | <term>
+//
+bool expr(list<Token>& tokens, bool trace)
+{
+   if (trace)
+   {
+      cout << "<expr>" << endl;
+   }
+    
+   if(!term(tokens, trace)) // check if not the term function
+   {
+       return false;
+   }
+    
+   Token T = tokens.front();
+    
+    // 
+    // check for every operator 
+    //
+    
+   if(T.Value == "+" || T.Value == "-" ||T.Value =="*"||T.Value =="/"||T.Value =="%" ||T.Value ==">" ||T.Value ==">="||T.Value =="<"||T.Value =="<="||T.Value =="=="||T.Value =="!=")
+   {
+       if (!oper(tokens, trace)) // check if oper is not found
+       {
+           return false;
+       }
+       if (!expr(tokens, trace)) // check if expr is not found 
+       {
+           return false;
+       }
+   }
+   
+   //
+   // TODO
+   //
+
+   return true;
+}
+
+//
+// <term> ::= ( <expr> )
+//          | IDENTIFIER
+//          | INT_LITERAL
+//          | STR_LITERAL
+//
+bool term(list<Token>& tokens, bool trace)
+{
+   if (trace)
+   {
+      cout << "<term>" << endl;
+   }
+   
+   Token T = tokens.front();
+   if (T.ID == TokenID::LEFT_PAREN) // if it is not equal to the LEFT_PAREN
+   {
+       tokens.pop_front();
+       if(!expr(tokens, trace)) // if it is not equal to expr function
+       {
+           return false;
+       }
+       T = tokens.front();
+       if (T.ID != TokenID::RIGHT_PAREN) // if it is not equal to the RIGHT_PAREN
+       {
+           cout << "Syntax error: expecting ')', found '" << T.Value << "' @ (" << T.Line << ", " << T.Col << ")" << endl;
+           return false;
+       }
+       tokens.pop_front();
+       return true;
+   }
+   
+    //
+    // if it is equal to the IDENTIFIER or INT_LITERAL or STR_LITERAL
+    //
+   else if (T.ID == TokenID::IDENTIFIER || T.ID == TokenID::INT_LITERAL || T.ID == TokenID::STR_LITERAL)
+   {
+       tokens.pop_front();
+       return true;
+   }
+   
+   else
+   {
+       cout << "Syntax error: expecting 'term', found '" << T.Value << "' @ (" << T.Line << ", " << T.Col << ")" << endl;
+       return false;
+   }
+    return false;
+}
+
+//
+// <oper> ::= +
+//          | -
+//          | *
+//          | /
+//          | %
+//          | <
+//          | <=
+//          | >
+//          | >=
+//          | ==
+//          | !=
+//
+bool oper(list<Token>& tokens, bool trace)
+{
+   if (trace)
+   {
+      cout << "<oper>" << endl;
+   }
+    
+   Token T = tokens.front();
+    
+   if(T.ID == TokenID::PLUS) // check for plus operator
+   {
+       tokens.pop_front();
+       return true;
+   }
+   else if(T.ID == TokenID::MINUS) // check for minus operator
+   {
+       tokens.pop_front();
+       return true;
+   }
+   else if(T.ID == TokenID::MULT) // check for multiplication operator
+   {
+       tokens.pop_front();
+       return true;
+   }
+   else if(T.ID == TokenID::DIV) // check for division operator
+   {
+       tokens.pop_front();
+       return true;
+   }
+   else if(T.ID == TokenID::MOD) // check for modulus operator
+   {
+       tokens.pop_front();
+       return true;
+   }
+   else if(T.ID == TokenID::LT) // check for less than operator
+   {
+       tokens.pop_front();
+       return true;
+   }
+   else if(T.ID == TokenID::LTE) // check for less than equal operator
+   {
+       tokens.pop_front();
+       return true;
+   }
+   else if(T.ID == TokenID::GT) // check for greater than operator
+   {
+       tokens.pop_front();
+       return true;
+   }
+   else if(T.ID == TokenID::GTE) // check for greater than equal operator
+   {
+       tokens.pop_front();
+       return true;
+   }
+   else if(T.ID == TokenID::EQUAL_EQUAL) // check for equal equal operator
+   {
+       tokens.pop_front();
+       return true;
+   }
+   else if(T.ID == TokenID::NOT_EQUAL) // check for not equal operator
+   {
+       tokens.pop_front();
+       return true;
+   }
+   else // if above all are false print the oper statement
+   {
+       cout << "Syntax error: expecting 'oper', found '" << T.Value << "' @ (" << T.Line << ", " << T.Col << ")" << endl;
+       return false;
+   }
+   
+   return true;
+}
+
+
+
+
+
+
+
+
+
+
+/*parser.h*/
+
+//
+// Recursive-descent parser declarations for SimpleC programming language
+//
+// Originally written by: Prof. Hummel, U. of Illinois Chicago, Fall 2020
+// Project 04
+//
+// DO NOT CHANGE THIS FILE
+//
+
+#pragma once
+
+#include <iostream>
+#include <istream>
+#include <string>
+#include <list>
+
+#include "token.h"
+
+using namespace std;
+
+//
+// recursive-descent functions defined in parser.cpp:
+//
+bool simplec(list<Token>& tokens, bool trace);
+bool stmts(list<Token>& tokens, bool trace);
+bool stmt(list<Token>& tokens, bool trace);
+bool missing(list<Token>& tokens, bool trace);
+bool vardecl(list<Token>& tokens, bool trace);
+bool input(list<Token>& tokens, bool trace);
+bool output(list<Token>& tokens, bool trace);
+bool output_elem(list<Token>& tokens, bool trace);
+bool more_elems(list<Token>& tokens, bool trace);
+bool assignment(list<Token>& tokens, bool trace);
+bool block(list<Token>& tokens, bool trace);
+bool whileloop(list<Token>& tokens, bool trace);
+bool ifthenelse(list<Token>& tokens, bool trace);
+bool elseblock(list<Token>& tokens, bool trace);
+bool expr(list<Token>& tokens, bool trace);
+bool term(list<Token>& tokens, bool trace);
+bool oper(list<Token>& tokens, bool trace);
+
+
+
+
+
+
+
+
+
+/*token.h*/
+
+//
+// Token definitions for SimpleC programming language
+//
+// Originally written by: Prof. Hummel, U. of Illinois Chicago, Fall 2020
+// Project 04
+//
+// DO NOT CHANGE THIS FILE
+//
+
+#pragma once
+
+#include <iostream>
+#include <istream>
+#include <string>
+#include <cctype>  // isdigit, isalpha
+
+using namespace std;
+
+
+//
+// Token
+// 
+// A token in the SimpleC programming language
+//
+struct Token
+{
+   int     ID;    // TokenID (see enum below)
+   string  Value; // the actual token, e.g. ";", "123", or "x"
+   int     Line;  // line containing the token (1-based)
+   int     Col;   // column where the token starts (1-based)
+
+   //
+   // overload << so we can output a Token easily
+   //
+   friend ostream& operator<<(ostream& os, const Token& T);  // defined in token.cpp
+};
+
+
+//
+// TokenID
+//
+// Every token in SimpleC has a unique ID number
+//
+enum TokenID 
+{ 
+   UNKNOWN = -1, // a character that is not part of SimpleC
+   EOS,          // End-Of-Stream
+   SEMICOLON,    // ;
+   LEFT_PAREN,   // (
+   RIGHT_PAREN,  // )
+   LEFT_BRACE,   // {
+   RIGHT_BRACE,  // }
+   PLUS,         // +
+   MINUS,        // -
+   MULT,         // *
+   DIV,          // /
+   MOD,          // %
+   GT,           // >
+   GTE,          // >=
+   INPUT,        // >>
+   LT,           // <
+   LTE,          // <=
+   OUTPUT,       // <<
+   EQUAL,        // =
+   EQUAL_EQUAL,  // ==
+   NOT_EQUAL,    // !=
+   INT_LITERAL,  // e.g. 123
+   STR_LITERAL,  // e.g. "hello cs141"
+   IDENTIFIER,   // e.g. count
+   VOID_KEYW,    // void
+   MAIN_KEYW,    // main
+   INT_KEYW,     // int
+   CIN_KEYW,     // cin
+   COUT_KEYW,    // cout
+   ENDL_KEYW,    // endl
+   WHILE_KEYW,   // while
+   IF_KEYW,      // if
+   ELSE_KEYW     // else
+};
+
+
+//
+// nextToken() declaration so it can be called from other files:
+//
+Token nextToken(istream& input, int& line, int& col);
