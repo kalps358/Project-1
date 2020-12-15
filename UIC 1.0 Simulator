@@ -1,0 +1,433 @@
+//
+// Simulator for UIC 1.0, a very simple computer language.
+//
+// Author: Kalpkumar Shah
+// Author: Prof. Hummel, U. of Illinois Chicago, Fall 2020
+//
+
+#include <iostream>
+#include <fstream>
+#include <string>
+
+using namespace std;
+
+string nextToken(istream& infile);  // defined in "token.cpp"
+//
+// main:
+//
+int main()
+{
+    string filename;
+    cout << "Filename> ";
+    cin >> filename;
+    
+    //
+    // open the program file:
+    //
+    ifstream infile(filename);
+    
+    if (!infile.good())
+    {
+        cout << "**Error: unable to open input file '" << filename << "'." << endl;
+        return 0;
+    }
+    
+    //
+    // read the contents of the file and echo to the console:
+    //
+    string token, operand;
+    
+    int ACC, M0, M1, M2, M3, M4, M5, M6, M7, M8, M9, x;
+    
+    token = nextToken(infile);  //access the next comand in the file
+    while (token != "")         //compares the value, if true enters the loop
+    {
+        if(token == "out_s")    //check the condition
+        {
+            operand = nextToken(infile);    //gives the next token value to the string operand
+            cout << operand;    //displays the string
+        }
+        
+        else if(token == "in_i")    
+        {
+            cin >> ACC;         //gives the input to the variable ACC
+        }
+        
+        else if(token == "store_i")
+        {
+            operand = nextToken(infile);
+            if(operand == "M0")
+            {
+                M0 = ACC;
+            }
+            else if(operand == "M1")
+            {
+                M1 = ACC;
+            }
+            else if(operand == "M2")
+            {
+                M2 = ACC;
+            }
+            else if(operand == "M3")            //
+            {                                   //stores the value from ACC to respective input locations 
+                M3 = ACC;                       //
+            }
+            else if(operand == "M4")
+            {
+                M4 = ACC;
+            }
+            else if(operand == "M5")
+            {
+                M5 = ACC;
+            }
+            else if(operand == "M6")
+            {
+                M6 = ACC;
+            }
+            else if(operand == "M7")
+            {
+                M7 = ACC;
+            }
+            else if(operand == "M8")
+            {
+                M8 = ACC;
+            }
+            else
+            {
+                M9 = ACC;
+            }
+        }
+        
+        else if(token == "load_i")
+        {
+            operand = nextToken(infile);
+            if (operand == "M0")
+            {
+                ACC = M0;
+            }
+            else if(operand == "M1")
+            {
+                ACC = M1;
+            }
+            else if(operand == "M2")
+            {
+                ACC = M2;
+            }
+            else if(operand == "M3")
+            {
+                ACC = M3;
+            }
+            else if(operand == "M4")
+            {
+                ACC = M4;
+            }
+            else if(operand == "M5")
+            {
+                ACC = M5;
+            }
+            else if(operand == "M6")
+            {
+                ACC = M6;
+            }
+            else if(operand == "M7")
+            {
+                ACC = M7;
+            }
+            else if(operand == "M8")
+            {
+                ACC = M8;
+            }
+            else if(operand == "M9")
+            {
+                ACC = M9;
+            }
+            else
+            {
+                x = stoi(operand);          //converts the string to an integer
+                ACC = x;
+            }
+        }
+        
+        else if(token == "add_i")
+        {
+            operand = nextToken(infile);
+            if (operand == "M0")
+            {
+                ACC = ACC + M0;
+            }
+            else if (operand == "M1")
+            {
+                ACC = ACC + M1;
+            }
+            else if (operand == "M2")
+            {
+                ACC = ACC + M2;
+            }
+            else if (operand == "M3")
+            {
+                ACC = ACC + M3;
+            }
+            else if (operand == "M4")
+            {
+                ACC = ACC + M4;
+            }
+            else if (operand == "M5")
+            {
+                ACC = ACC + M5;
+            }
+            else if (operand == "M6")
+            {
+                ACC = ACC + M6;
+            }
+            else if (operand == "M7")
+            {
+                ACC = ACC + M7;
+            }
+            else if (operand == "M8")
+            {
+                ACC = ACC + M8;
+            }
+            else if (operand == "M9")
+            {
+                ACC = ACC + M9;
+            }
+            else
+            {
+                x = std::stoi(operand);
+                ACC = ACC + x;
+            }
+        }
+        
+        else if(token == "sub_i")
+        {
+            operand = nextToken(infile);
+            if (operand == "M0")
+            {
+                ACC = ACC - M0;
+            }
+            else if (operand == "M1")
+            {
+                ACC = ACC - M1;
+            }
+            else if (operand == "M2")
+            {
+                ACC = ACC - M2;
+            }
+            else if (operand == "M3")
+            {
+                ACC = ACC - M3;
+            }
+            else if (operand == "M4")
+            {
+                ACC = ACC - M4;
+            }
+            else if (operand == "M5")
+            {
+                ACC = ACC - M5;
+            }
+            else if (operand == "M6")
+            {
+                ACC = ACC - M6;
+            }
+            else if (operand == "M7")
+            {
+                ACC = ACC - M7;
+            }
+            else if (operand == "M8")
+            {
+                ACC = ACC - M8;
+            }
+            else if (operand == "M9")
+            {
+                ACC = ACC - M9;
+            }
+            else
+            {
+                x = std::stoi(operand);
+                ACC = ACC - x;
+            }
+        }
+        
+        else if(token == "div_i")
+        {
+            operand = nextToken(infile);
+            if (operand == "M0")
+            {
+                ACC = ACC / M0;
+            }
+            else if (operand == "M1")
+            {
+                ACC = ACC / M1;
+            }
+            else if (operand == "M2")
+            {
+                ACC = ACC / M2;
+            }
+            else if (operand == "M3")
+            {
+                ACC = ACC / M3;
+            }
+            else if (operand == "M4")
+            {
+                ACC = ACC / M4;
+            }
+            else if (operand == "M5")
+            {
+                ACC = ACC / M5;
+            }
+            else if (operand == "M6")
+            {
+                ACC = ACC / M6;
+            }
+            else if (operand == "M7")
+            {
+                ACC = ACC / M7;
+            }
+            else if (operand == "M8")
+            {
+                ACC = ACC / M8;
+            }
+            else if (operand == "M9")
+            {
+                ACC = ACC / M9;
+            }
+            else
+            {
+                x = stoi(operand);
+                ACC = ACC / x;
+            }
+            
+        }
+       
+        else if(token == "out_i")
+        {
+            cout << ACC;
+        }
+        
+        else if(token == "clear")
+        {
+            M0 = 0;
+            M1 = 0;         //
+            M2 = 0;         //clear all the values from M0 to M9 and stores 0
+            M3 = 0;         //
+            M4 = 0;
+            M5 = 0;
+            M6 = 0;
+            M7 = 0;
+            M8 = 0;
+            M9 = 0;
+        }
+        
+        else if(token == "mult_i")
+        {
+            operand = nextToken(infile);
+            if (operand == "M0")
+            {
+                ACC = ACC * M0;
+            }
+            else if (operand == "M1")
+            {
+                ACC = ACC * M1;
+            }
+            else if (operand == "M2")
+            {
+                ACC = ACC * M2;
+            }
+            else if (operand == "M3")
+            {
+                ACC = ACC * M3;
+            }
+            else if (operand == "M4")
+            {
+                ACC = ACC * M4;
+            }
+            else if (operand == "M5")
+            {
+                ACC = ACC * M5;
+            }
+            else if (operand == "M6")
+            {
+                ACC = ACC * M6;
+            }
+            else if (operand == "M7")
+            {
+                ACC = ACC * M7;
+            }
+            else if (operand == "M8")
+            {
+                ACC = ACC * M8;
+            }
+            else if (operand == "M9")
+            {
+                ACC = ACC * M9;
+            }
+            else
+            {
+                x = stoi(operand);
+                ACC = ACC * x;
+            }
+        }
+        
+        else if(token == "mod_i")
+        {
+            operand = nextToken(infile);
+            if (operand == "M0")
+            {
+                ACC = ACC % M0;
+            }
+            else if (operand == "M1")
+            {
+                ACC = ACC % M1;
+            }
+            else if (operand == "M2")
+            {
+                ACC = ACC % M2;
+            }
+            else if (operand == "M3")
+            {
+                ACC = ACC % M3;
+            }
+            else if (operand == "M4")
+            {
+                ACC = ACC % M4;
+            }
+            else if (operand == "M5")
+            {
+                ACC = ACC % M5;
+            }
+            else if (operand == "M6")
+            {
+                ACC = ACC % M6;
+            }
+            else if (operand == "M7")
+            {
+                ACC = ACC % M7;
+            }
+            else if (operand == "M8")
+            {
+                ACC = ACC % M8;
+            }
+            else if (operand == "M9")
+            {
+                ACC = ACC % M9;
+            }
+            else
+            {
+                x = std::stoi(operand);
+                ACC = ACC % x;
+            }
+        }
+        
+        else if(token == "end")
+        {
+            break;              //breaks the loop if the condition becomes true
+        }
+        
+        token = nextToken(infile);
+    }
+    
+    //
+    // done:
+    //
+    return 0;
+}
