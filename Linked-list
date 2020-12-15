@@ -1,0 +1,1857 @@
+//
+// Author: Kalpkumar Shah, UIC, Fall 2020, 656968033
+// 
+
+#include<iostream>
+#include"list.h"
+#include"oper.h"
+#include<cstring>
+#include<fstream>
+
+using namespace std;
+
+//
+// doLoad
+//
+// doLoad function tries to call the file and all the three lists by reference
+// and checks for each and every command which are available in main
+// It also calls itself if the file opens another file in it.
+//
+
+void doLoad(ifstream& infile, List& L1,List& L2,List& L3)
+{
+    string cmd;
+    infile >> cmd;
+    
+    while (cmd != "x")
+    {
+        if (cmd == "l")
+        {
+            //
+            // load commandfile
+            //
+            string commandFile;
+            infile >> commandFile;
+            ifstream infile(commandFile);
+            if (!infile.good())                                
+            {
+                cout << "File does not exist, try again..." << endl;                                      
+            }
+            else
+            {
+                cout << "Load: loading '" << commandFile << "'"<< endl;
+                doLoad(infile,L1,L2,L3);
+                cout << "Load: done '" << commandFile << "'"<< endl;
+            }
+        }
+        
+        else if (cmd == "p")
+        {
+            //
+            // print <list>
+            //
+            int list;
+            infile >> list;
+            if (list == 1)
+                doPrint(L1);
+            else if (list == 2)
+                doPrint(L2);
+            else if (list == 3)
+                doPrint(L3);
+            else
+                cout << "Invalid list, try again..." << endl;
+        }
+        
+        else if (cmd == "s")
+        {
+            //
+            // search <list> <value>
+            //
+            int list,x;
+            infile >> list;
+            infile >> x;
+            if (list == 1)
+                doSearch(L1,x);
+            else if (list == 2)
+                doSearch(L2,x);
+            else if (list == 3)
+                doSearch(L3,x);
+            else
+                cout << "Invalid list, try again..." << endl;
+        }
+        
+        else if (cmd == "i")
+        {
+            //
+            // insert <list> <position> <value>
+            //
+            int list,position,value;
+            infile >> list;
+            infile >> position;
+            infile >> value;
+            if (list == 1)
+                doInsert(L1,position,value);                
+            else if (list == 2)
+                doInsert(L2,position,value);
+            else if (list == 3)                
+                doInsert(L3,position,value);
+            else
+                cout << "Invalid list, try again..." << endl;
+        }
+        
+        else if (cmd == "r")
+        {
+            //
+            // remove <list> <position>
+            //
+            int list,position;
+            infile >> list;
+            infile >> position;
+            if (list == 1)
+                doRemove(L1,position);                
+            else if (list == 2)
+                doRemove(L2,position);
+            else if (list == 3)                
+                doRemove(L3,position);
+            else
+                cout << "Invalid list, try again..." << endl;
+        }
+        
+        else if (cmd == "rl")
+        {
+            //
+            // rotate-left <list>
+            //
+            int list;
+            infile >> list;
+            if (list == 1)
+                doRotateLeft(L1);                
+            else if (list == 2)
+                doRotateLeft(L2);
+            else if (list == 3)                
+                doRotateLeft(L3);
+            else
+                cout << "Invalid list, try again..." << endl;
+        }
+        
+        else if (cmd == "rr")
+        {
+            //
+            // rotate-right <list>
+            //
+            int list;
+            infile >> list;
+            if (list == 1)
+                doRotateRight(L1);                
+            else if (list == 2)
+                doRotateRight(L2);
+            else if (list == 3)                
+                doRotateRight(L3);
+            else
+                cout << "Invalid list, try again..." << endl;
+        }
+        
+        else if (cmd == "f")
+        {
+            //
+            // free <list>
+            //
+            int list;
+            infile >> list;
+            if (list == 1)
+                doFree(L1);                
+            else if (list == 2)
+                doFree(L2);
+            else if (list == 3)                
+                doFree(L3);
+            else
+                cout << "Invalid list, try again..." << endl;
+        }
+        
+        else if (cmd == "a")
+        {
+            //
+            // append <list> <list>
+            //
+            int list1,list2;
+            infile >> list1;
+            infile >> list2;
+            if (list1 == 1)
+            {
+                if (list2 == 1)
+                    cout << "Error, you cannot append a list to itself, try again..." << endl;
+                else if(list2 == 2)
+                    doAppend(L1,L2);
+                else if (list2 == 3)
+                    doAppend(L1,L3);
+                else
+                    cout << "Invalid list, try again..." << endl;
+            }
+                                
+            else if (list1 == 2)
+            {
+                if (list2 == 1)
+                    doAppend(L2,L1);
+                else if(list2 == 2)
+                    cout << "Error, you cannot append a list to itself, try again..." << endl;
+                else if (list2 == 3)
+                    doAppend(L2,L3);
+                else
+                    cout << "Invalid list, try again..." << endl;
+            }
+            else if (list1 == 3)
+            {
+                if (list2 == 1)
+                    doAppend(L3,L1);
+                else if(list2 == 2)
+                    doAppend(L3,L2);
+                else if (list2 == 3)
+                    cout << "Error, you cannot append a list to itself, try again..." << endl;
+                else
+                    cout << "Invalid list, try again..." << endl;
+            }
+            else
+                cout << "Invalid list, try again..." << endl;
+        }
+        
+        else if (cmd == "m")
+        {
+            //
+            // merge <list> <list>
+            //
+            int list1,list2;
+            infile >> list1;
+            infile >> list2;
+            if (list1 == 1)
+            {
+                if (list2 == 1)
+                    cout << "Error, you cannot merge a list with itself, try again..." << endl;
+                else if(list2 == 2)
+                    doMerge(L1,L2);
+                else if (list2 == 3)
+                    doMerge(L1,L3);
+                else
+                    cout << "Invalid list, try again..." << endl;
+            }
+                                
+            else if (list1 == 2)
+            {
+                if (list2 == 1)
+                    doMerge(L2,L1);
+                else if(list2 == 2)
+                    cout << "Error, you cannot merge a list with itself, try again..." << endl;
+                else if (list2 == 3)
+                    doMerge(L2,L3);
+                else
+                    cout << "Invalid list, try again..." << endl;
+            }
+            else if (list1 == 3)
+            {
+                if (list2 == 1)
+                    doMerge(L3,L1);
+                else if(list2 == 2)
+                    doMerge(L3,L2);
+                else if (list2 == 3)
+                    cout << "Error, you cannot merge a list with itself, try again..." << endl;
+                else
+                    cout << "Invalid list, try again..." << endl;
+            }
+            else
+                cout << "Invalid list, try again..." << endl;
+        }
+        
+        else if (cmd == "cp")
+        {
+            //
+            // copy <list> <list>
+            //
+            int list1,list2;
+            infile >> list1;
+            infile >> list2;
+            if (list1 == 1)
+            {
+                if (list2 == 1)
+                    cout << "Error, you cannot copy a list onto itself, try again..." << endl;
+                else if(list2 == 2)
+                    doCopy(L1,L2);
+                else if (list2 == 3)
+                    doCopy(L1,L3);
+                else
+                    cout << "Invalid list, try again..." << endl;
+            }
+                                
+            else if (list1 == 2)
+            {
+                if (list2 == 1)
+                    doCopy(L2,L1);
+                else if(list2 == 2)
+                    cout << "Error, you cannot copy a list onto itself, try again..." << endl;
+                else if (list2 == 3)
+                    doCopy(L2,L3);
+                else
+                    cout << "Invalid list, try again..." << endl;
+            }
+            else if (list1 == 3)
+            {
+                if (list2 == 1)
+                    doCopy(L3,L1);
+                else if(list2 == 2)
+                    doCopy(L3,L2);
+                else if (list2 == 3)
+                    cout << "Error, you cannot copy a list onto itself, try again..." << endl;
+                else
+                    cout << "Invalid list, try again..." << endl;
+            }
+            else
+                cout << "Invalid list, try again..." << endl;
+        }
+        
+        else if (cmd == "cl")
+        {
+            //
+            // clear <list>
+            //
+            int list;
+            infile >> list;
+            if (list == 1)
+                doClean(L1);                
+            else if (list == 2)
+                doClean(L2);
+            else if (list == 3)                
+                doClean(L3);
+            else
+                cout << "Invalid list, try again..." << endl;
+        }
+        
+        else
+        {
+            //
+            // command is wrong
+            //
+            cout << "Invalid command, try again..." << endl;
+        }
+        
+        cout << endl;
+        infile >> cmd;
+    }
+    
+    
+}
+
+int main()
+{
+    //
+    // Taking three lists in particular
+    //
+    List L1;
+    List L2;
+    List L3;
+    
+    //
+    // making the list nullptr (in short)
+    //
+    init (L1);
+    init (L2);
+    init (L3);
+    string cmd;
+    
+    //
+    // main program starts
+    //
+    cout << "** Program for working with linked-lists **" << endl;
+    
+    //
+    // prompting user to enter the command from particular
+    //
+    cout << "\nEnter a command (l,p,s,i,r,rl,rr,f,a,m,cp,cl,x): ";
+    cin >> cmd;
+    
+    //
+    // while loop until the command is x will be true else false and ends the loop
+    //
+    while (cmd != "x")
+    {
+        if (cmd == "l")
+        {
+            //
+            // load commandfile
+            //
+            string commandFile;
+            cin >> commandFile;
+            ifstream infile(commandFile);
+            if (!infile.good())                                
+            {
+                cout << "File does not exist, try again..." << endl;                                      
+            }
+            else
+            {
+                cout << "Load: loading '" << commandFile << "'"<< endl;
+                doLoad(infile,L1,L2,L3);
+                cout << "Load: done '" << commandFile << "'"<< endl;
+            }
+        }
+        
+        else if (cmd == "p")
+        {
+            //
+            // print <list>
+            //
+            int list;
+            cin >> list;
+            if (list == 1)
+                doPrint(L1);
+            else if (list == 2)
+                doPrint(L2);
+            else if (list == 3)
+                doPrint(L3);
+            else
+                cout << "Invalid list, try again..." << endl;
+        }
+        
+        else if (cmd == "s")
+        {
+            //
+            // search <list> <value>
+            //
+            int list,x;
+            cin >> list;
+            cin >> x;
+            if (list == 1)
+                doSearch(L1,x);
+            else if (list == 2)
+                doSearch(L2,x);
+            else if (list == 3)
+                doSearch(L3,x);
+            else
+                cout << "Invalid list, try again..." << endl;
+        }
+        
+        else if (cmd == "i")
+        {
+            //
+            // insert <list> <position> <value>
+            //
+            int list,position,value;
+            cin >> list;
+            cin >> position;
+            cin >> value;
+            if (list == 1)
+                doInsert(L1,position,value);                
+            else if (list == 2)
+                doInsert(L2,position,value);
+            else if (list == 3)                
+                doInsert(L3,position,value);
+            else
+                cout << "Invalid list, try again..." << endl;
+        }
+        
+        else if (cmd == "r")
+        {
+            //
+            // remove <list> <position>
+            //
+            int list,position;
+            cin >> list;
+            cin >> position;
+            if (list == 1)
+                doRemove(L1,position);                
+            else if (list == 2)
+                doRemove(L2,position);
+            else if (list == 3)                
+                doRemove(L3,position);
+            else
+                cout << "Invalid list, try again..." << endl;
+        }
+        
+        else if (cmd == "rl")
+        {
+            //
+            // rotate-left <list>
+            //
+            int list;
+            cin >> list;
+            if (list == 1)
+                doRotateLeft(L1);                
+            else if (list == 2)
+                doRotateLeft(L2);
+            else if (list == 3)                
+                doRotateLeft(L3);
+            else
+                cout << "Invalid list, try again..." << endl;
+        }
+        
+        else if (cmd == "rr")
+        {
+            //
+            // rotate-right <list>
+            //
+            int list;
+            cin >> list;
+            if (list == 1)
+                doRotateRight(L1);                
+            else if (list == 2)
+                doRotateRight(L2);
+            else if (list == 3)                
+                doRotateRight(L3);
+            else
+                cout << "Invalid list, try again..." << endl;
+        }
+        
+        else if (cmd == "f")
+        {
+            //
+            // free <list>
+            //
+            int list;
+            cin >> list;
+            if (list == 1)
+                doFree(L1);                
+            else if (list == 2)
+                doFree(L2);
+            else if (list == 3)                
+                doFree(L3);
+            else
+                cout << "Invalid list, try again..." << endl;
+        }
+        
+        else if (cmd == "a")
+        {
+            //
+            // append <list> <list>
+            //
+            int list1,list2;
+            cin >> list1;
+            cin >> list2;
+            if (list1 == 1)
+            {
+                if (list2 == 1)
+                    cout << "Error, you cannot append a list to itself, try again..." << endl;
+                else if(list2 == 2)
+                    doAppend(L1,L2);
+                else if (list2 == 3)
+                    doAppend(L1,L3);
+                else
+                    cout << "Invalid list, try again..." << endl;
+            }
+                                
+            else if (list1 == 2)
+            {
+                if (list2 == 1)
+                    doAppend(L2,L1);
+                else if(list2 == 2)
+                    cout << "Error, you cannot append a list to itself, try again..." << endl;
+                else if (list2 == 3)
+                    doAppend(L2,L3);
+                else
+                    cout << "Invalid list, try again..." << endl;
+            }
+            else if (list1 == 3)
+            {
+                if (list2 == 1)
+                    doAppend(L3,L1);
+                else if(list2 == 2)
+                    doAppend(L3,L2);
+                else if (list2 == 3)
+                    cout << "Error, you cannot append a list to itself, try again..." << endl;
+                else
+                    cout << "Invalid list, try again..." << endl;
+            }
+            else
+                cout << "Invalid list, try again..." << endl;
+        }
+        
+        else if (cmd == "m")
+        {
+            //
+            // merge <list> <list>
+            //
+            int list1,list2;
+            cin >> list1;
+            cin >> list2;
+            if (list1 == 1)
+            {
+                if (list2 == 1)
+                    cout << "Error, you cannot merge a list with itself, try again..." << endl;
+                else if(list2 == 2)
+                    doMerge(L1,L2);
+                else if (list2 == 3)
+                    doMerge(L1,L3);
+                else
+                    cout << "Invalid list, try again..." << endl;
+            }
+                                
+            else if (list1 == 2)
+            {
+                if (list2 == 1)
+                    doMerge(L2,L1);
+                else if(list2 == 2)
+                    cout << "Error, you cannot merge a list with itself, try again..." << endl;
+                else if (list2 == 3)
+                    doMerge(L2,L3);
+                else
+                    cout << "Invalid list, try again..." << endl;
+            }
+            else if (list1 == 3)
+            {
+                if (list2 == 1)
+                    doMerge(L3,L1);
+                else if(list2 == 2)
+                    doMerge(L3,L2);
+                else if (list2 == 3)
+                    cout << "Error, you cannot merge a list with itself, try again..." << endl;
+                else
+                    cout << "Invalid list, try again..." << endl;
+            }
+            else
+                cout << "Invalid list, try again..." << endl;
+        }
+        
+        else if (cmd == "cp")
+        {
+            //
+            // copy <list> <list>
+            //
+            int list1,list2;
+            cin >> list1;
+            cin >> list2;
+            if (list1 == 1)
+            {
+                if (list2 == 1)
+                    cout << "Error, you cannot copy a list onto itself, try again..." << endl;
+                else if(list2 == 2)
+                    doCopy(L1,L2);
+                else if (list2 == 3)
+                    doCopy(L1,L3);
+                else
+                    cout << "Invalid list, try again..." << endl;
+            }
+                                
+            else if (list1 == 2)
+            {
+                if (list2 == 1)
+                    doCopy(L2,L1);
+                else if(list2 == 2)
+                    cout << "Error, you cannot copy a list onto itself, try again..." << endl;
+                else if (list2 == 3)
+                    doCopy(L2,L3);
+                else
+                    cout << "Invalid list, try again..." << endl;
+            }
+            else if (list1 == 3)
+            {
+                if (list2 == 1)
+                    doCopy(L3,L1);
+                else if(list2 == 2)
+                    doCopy(L3,L2);
+                else if (list2 == 3)
+                    cout << "Error, you cannot copy a list onto itself, try again..." << endl;
+                else
+                    cout << "Invalid list, try again..." << endl;
+            }
+            else
+                cout << "Invalid list, try again..." << endl;
+        }
+        
+        else if (cmd == "cl")
+        {
+            //
+            // clear <list>
+            //
+            int list;
+            cin >> list;
+            if (list == 1)
+                doClean(L1);                
+            else if (list == 2)
+                doClean(L2);
+            else if (list == 3)                
+                doClean(L3);
+            else
+                cout << "Invalid list, try again..." << endl;
+        }
+        
+        else
+        {
+            //
+            // command is wrong
+            //
+            cout << "Invalid command, try again..." << endl;
+        }
+        
+        //
+        // Prompt user again until they enters "x"
+        //
+        cout << endl;
+        cout << "Enter a command (l,p,s,i,r,rl,rr,f,a,m,cp,cl,x): ";
+        cin >> cmd;
+    }
+    
+    cout << endl;
+    cout << "** Done **" << endl;
+    
+    //
+    // free up the memory stored in lists
+    //
+    free(L1);
+    free(L2);
+    free(L3);
+    return 0;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/*oper.cpp*/
+
+//
+// Declarations of command functions manipulating linked-lists.
+//
+// Author: Kalpkumar Shah, UIC, Fall 2020
+// Initially by: Prof. Hummel, U. of Illinois Chicago, Fall 2020
+// Project 05
+//
+
+#include <iostream>
+#include <string>
+
+#include "list.h"
+
+using namespace std;
+
+//
+// doPrint
+//
+// Prints each element, one after another, on a single line; 
+// a space follows each element. 
+//
+void doPrint(List L)
+{
+   int i=0;
+   cout << "Print: ";
+   while (i < size(L))
+   {
+       cout << ith(L,i) << " ";
+       i++;
+   }
+   cout << endl;
+}
+
+//
+// doSearch
+//
+// Searches the list for the given value.  If found, a message with
+// the value and list position is output on the console.  If not 
+// found, a "not found" message is output.
+//
+void doSearch(List L, int value)
+{
+   try
+   {
+       int count=search(L,value);            
+       if(count < 0)
+           cout << "Search: value " << value <<  " not found" << endl;
+       else
+           cout << "Search: value " << value << " found at position " << count << endl;
+    }              
+   catch (exception& e)
+   {
+       cout << "Search: value " << e.what() <<  " not found" << endl;
+   }
+}
+
+//
+// doInsert
+//
+// Attempts to insert the value in the List at the specified
+// position.  If successful, a message is output on the console
+// containing the value and position.  If unsuccessful, the 
+// exception is caught and the error msg is output to the 
+// console.  Either way, the list is printed afterwards.
+//
+void doInsert(List& L, int position, int value)
+{
+    try
+    {
+        insert(L,position,value);
+        cout << "Insert: value " << value  << " successfully inserted at position " << position << endl;
+        doPrint(L);
+    }
+    catch(exception& e)
+    {
+        cout << "Insert: failed ('" << e.what() << "')" << endl;
+        doPrint(L);
+    }
+}
+
+//
+// doRemove
+//
+// Attempts to remove the node at the specified position from
+// the list.  If successful, a message containing the node's 
+// value and position is output on the console.  If unsuccessful,
+// the exception is caught and the error msg is output to the 
+// console.  Either way, the list is printed afterwards.
+//
+void doRemove(List& L, int position)
+{
+    try
+    {
+        int value = remove(L,position);
+        cout << "Remove: value " << value << " successfully removed from position " << position << endl;
+        doPrint(L);
+    }
+    catch(exception& e)
+    {
+        cout << "Remove: failed ('" << e.what() << "')" << endl;
+        doPrint(L);
+    }
+}
+
+//
+// doRotateLeft
+//
+// Rotates the given list left, meaning the head element is removed
+// and then inserted at the tail. The result is that all elements move
+// forward ("left") one place.  If the list is empty, nothing happens;
+// an empty list is not considered an error.
+//
+// The list is printed before and after the rotation, with a success
+// message in-between.
+//
+void doRotateLeft(List& L)
+{
+    doPrint(L);
+    
+    if(!empty(L))
+    {
+        int value = pop_front(L);
+        push_back(L,value);
+    }
+    
+    cout << "Rotate Left: success" << endl;
+    
+    doPrint(L);
+}
+
+//
+// doRotateRight
+//
+// Rotates the given list right, meaning the tail element is removed
+// and then inserted at the head. The result is that all elements move
+// backward ("right") one place.  If the list is empty, nothing happens;
+// an empty list is not considered an error.
+//
+// The list is printed before and after the rotation, with a success
+// message in-between.
+//
+void doRotateRight(List& L)
+{
+    doPrint(L);
+    
+    if(!empty(L))
+    {
+        int value = pop_back(L);
+        push_front(L,value);
+    }
+    
+    cout << "Rotate Right: success" << endl;
+    
+    doPrint(L);
+}
+
+//
+// doFree
+//
+// Frees the nodes in the given list, resetting the list to empty.
+// A success message is output to the console, followed by the 
+// contents of the list to confirm it's empty.
+//
+void doFree(List& L)
+{
+    free(L);
+    cout << "Free: success" << endl;
+    doPrint(L);
+}
+
+//
+// doAppend
+//
+// Appends the "Other" list to the end of "L".  Afterwards, the
+// "Other" list will be empty.  The lists are printed before and 
+// after the operation, with a success message in-between.
+//
+void doAppend(List& L, List& Other)
+{
+    doPrint(L);
+    doPrint(Other);
+    
+    while(!empty(Other))
+    {
+        int value = pop_front(Other);
+        push_back (L,value);
+    }
+    
+    cout << "Append: Success" << endl;
+    
+    doPrint(L);
+    doPrint(Other);
+}
+
+//
+// doMerge
+//
+// Merges the "Other" list into "L".  Afterwards, the "Other" list
+// will be empty.  By merge this means the elements of Other are
+// alternated with those of L.  Example: suppose we start with
+//    L = [10, 30, 20, 90, 80] and Other = [15, 5, 25]
+// Then after doMerge(L, Other):
+//    L = [10, 15, 30, 5, 20, 25, 90, 80] and Other = [ ]
+// Extra elements after the merge appear at the end of L.
+//
+// The lists are printed before and after the operation, with a 
+// success message in-between.
+// 
+void doMerge(List& L, List& Other)
+{
+    doPrint(L);
+    doPrint(Other);
+    
+    List T;
+    init(T);
+    while(!empty(Other) && !empty(L))
+    {
+        int value = pop_front(L);
+        push_back(T,value);
+        value = pop_front(Other);
+        push_back(T,value);
+    }
+    while(!empty(L))
+    {
+        int value = pop_front(L);
+        push_back(T,value);
+    }
+    while(!empty(Other))
+    {
+        int value = pop_front(Other);
+        push_back(T,value);
+    }
+    while(!empty(T))
+    {
+        int value = pop_front(T);
+        push_back(L,value);
+    }
+    cout << "Merge: Success" << endl;
+    
+    doPrint(L);
+    doPrint(Other);
+    free(T);
+}
+
+//
+// doCopy
+//
+// The current contents of Dest are free, and then a "deep" copy
+// of Src is stored in Dest.  A deep copy means that for each node
+// in Dest, a new node is dynamically-allocated and stored in Src.
+// This means that after doCopy returns, Dest is a complete and
+// distinct copy of Src.
+//
+// The lists are printed before and after the operation, with a 
+// success message in-between.
+//
+void doCopy(List& Dest, List Src)
+{
+    doPrint(Dest);
+    doPrint(Src);
+    free(Dest);
+    
+    int x=0;
+    while(x < size(Src))
+    {
+        int value = ith(Src,x);
+        push_back(Dest,value);
+        x++;
+    }
+    
+    cout << "Copy: Success" << endl;
+    
+    doPrint(Dest);
+    doPrint(Src);
+}
+
+//
+// doClean
+//
+// Removes duplicates from L, while preserving the original order.
+// The list is printed before and after, along with the # of 
+// duplicate values that were removed.
+//
+void doClean(List& L)
+{
+    doPrint(L);
+    List T;
+    init(T);
+    
+    while(!empty(L))
+    {
+        int value = pop_front(L);
+        push_back(T,value);
+    }
+    
+    int count=0;
+    
+    while(!empty(T))
+    {
+        int index = pop_front(T);
+        int point = search(T,index);
+        while(point >= 0)
+        {
+            remove(T,point);
+            point = search(T,index);
+            count++;
+        }
+        push_back(L,index);
+    }
+    
+    cout << "Clean: success, with " << count << " node(s) removed" << endl;
+    
+    doPrint(L);
+    free(T);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/*list.cpp*/
+
+//
+// Declarations of structs, and core functions, for two-way linked-lists.
+//
+// Author: Kalpkumar Shah, UIC, Fall 2020
+// Initially by: Prof. Hummel, U. of Illinois Chicago, Fall 2020
+// Project 05
+//
+
+#include <iostream>
+#include <string>
+#include <exception>
+#include <stdexcept>
+#include "list.h"
+
+using namespace std;
+
+//
+// Core linked-list functions:
+//
+
+//
+// init
+//
+// Initializes the list to empty.
+//
+// pre-condition: L is uninitialized and has not been used.
+// post-condition: L is properly initialized to denote empty.
+//
+void init(List& L)
+{
+    L.Head = nullptr;
+    L.Tail = nullptr;
+}
+
+//
+// free
+//
+// Frees the memory associated with the nodes in the list, 
+// and then sets the list to empty.
+//
+// pre-condition: a properly initialized list.
+// post-condition: L is properly set to denote empty.
+//
+void free(List& L)
+{
+    Node* cur = L.Head;
+    
+    while(cur != nullptr)
+    {
+        Node* temp = cur;
+        cur = cur->Next;
+        delete temp;
+    }
+    
+    L.Head = nullptr;
+    L.Tail = nullptr;
+}
+
+//
+// empty
+//
+// Returns true if the list is empty, false if not.
+//
+// pre-condition: a properly initialized list.
+// post-condition: L is unchanged.
+//
+bool empty(List L)
+{
+   if(L.Head == nullptr && L.Tail == nullptr)
+   {
+      return true;
+   }
+   
+   return false;
+}
+
+//
+// size
+//
+// Returns the number of nodes in the list.
+//
+// pre-condition: a properly initialized list.
+// post-condition: L is unchanged.
+//
+int  size(List L)
+{
+    Node* cur = L.Head;
+    int count=0;
+    while(cur != nullptr)
+    {
+        count++;
+        cur = cur->Next;
+    }
+    return count;
+}
+
+//
+// ith
+//
+// Returns the value in the node at the given position.
+// Positions are 0-based, which means a position of 0 
+// denotes the head of the list, and a position of N-1
+// denotes the tail of the list (where N=size(L)).  
+//
+// Example: if L=[10,20,30] then 
+//    ith(L,2) => 30
+//
+// pre-condition: a properly initialized list.
+// post-condition: L is unchanged.
+// exception: throws invalid_argument if position invalid.
+//
+int  ith(List L, int position)
+{
+   Node* cur = L.Head;
+   int count{0};
+   
+   while (cur!= nullptr)
+   {
+      if(count == position)
+      {
+         return (cur->Value);
+      }
+      count++;
+      cur = cur->Next;
+   }
+   
+   throw invalid_argument("ith: invalid position");
+}
+
+//
+// search
+//
+// Searches the list for the first occurence of value.
+// If found, the position of this value is returned.
+// If not found, -1 is returned.
+//
+// Positions are 0-based, which means a position of 0 
+// denotes the head of the list, and a position of N-1
+// denotes the tail of the list (where N=size(L)).  
+//
+// Example: if L=[10,20,30,20] then 
+//    search(L,20) => 1
+//
+// pre-condition: a properly initialized list.
+// post-condition: L is unchanged.
+//
+int  search(List L, int value)
+{
+   Node* cur = L.Head;
+   int count{0};
+   
+   while (cur!= nullptr)
+   {
+      if(cur->Value == value)
+      {
+         return count;
+      }
+      count++;
+      cur = cur->Next;
+   }
+    
+   return -1;
+}
+
+//
+// insert
+//
+// Inserts the given value in the list such that after
+// the insertion, the value is now at the given
+// position.
+//
+// Positions are 0-based, which means a position of 0 
+// denotes the value will end up at the head of the list,
+// and a position of N denotes the value will end up at
+// the tail of the list.  N=size(L) before insertion.
+//
+// Examples: if L=[10,20] then 
+//    insert(L,0,30) => [30,10,20]
+//    insert(L,1,30) => [10,30,20]
+//    insert(L,2,30) => [10,20,30]
+//
+// pre-condition: a properly initialized list.
+// post-condition: L contains value at given position.
+// exception: throws invalid_argument if position invalid.
+//
+void insert(List& L, int position, int value)
+{
+    Node* cur = L.Head;
+    Node* prev = nullptr;
+    
+    while (cur != nullptr)
+    {
+        if (position == 0)
+        {
+            break;
+        }
+        
+        position--;
+        
+        prev = cur;
+        cur = cur->Next;
+    }
+    if (prev == nullptr && cur == nullptr && position != 0)
+    {
+        throw runtime_error("insert: invalid position");
+    }
+    Node* newN = new Node();
+    newN->Value = value;
+    newN->Next = nullptr;
+    newN->Prev = nullptr;
+    if (prev == nullptr)
+    {
+        if(cur == nullptr)
+        {
+            L.Tail = newN;
+            L.Head = L.Tail;
+        }
+        else
+        {
+            newN->Next = cur;
+            cur->Prev = newN;
+            L.Head = newN;
+        }
+    }
+    else if (cur == nullptr)
+    {
+        if (prev == nullptr)
+        {
+             L.Tail = newN;
+             L.Head = L.Tail;
+        }
+        else
+        {
+            newN->Prev = prev;
+            prev->Next = newN;
+      
+            L.Tail = newN;
+        }
+    }
+    else 
+    {
+        prev->Next = newN;
+        newN->Next = cur;
+        
+        cur->Prev = newN;
+        newN->Prev = prev;
+    }
+}
+
+//
+// remove
+//
+// Removes the node at the given position from the list,
+// and returns the value stored in this node.
+//
+// Positions are 0-based, which means a position of 0 
+// denotes the head of the list, and a position of N-1
+// denotes the tail of the list.  N=size(L) before removal.
+//
+// Examples: if L=[10,20,30] then 
+//    remove(L,1) => returns 20 with L=[10,30]
+//
+// pre-condition: a properly initialized list.
+// post-condition: L with node at given position removed.
+// exception: throws invalid_argument if position invalid.
+//
+int  remove(List& L, int position)
+{
+    Node* cur = L.Head;
+    Node* prev = nullptr;
+    
+    while (cur != nullptr)
+    {
+        if (position == 0)
+        {
+            break;
+        }
+        
+        position--;
+        
+        prev = cur;
+        cur = cur->Next;
+    }    
+    
+    if (prev == nullptr)
+    {
+        if (cur == nullptr)
+        {
+            throw runtime_error("remove: invalid position");
+        }
+        else
+        {
+            if(cur->Next == nullptr)
+            {
+                L.Head = nullptr;
+                L.Tail = nullptr;
+            }
+            else
+            {
+                L.Head = cur->Next;
+                cur->Next->Prev = nullptr;
+            }
+        }
+    }
+    else
+    {
+        if (cur == nullptr)
+        {
+            throw runtime_error("remove: invalid position");
+        }
+        else
+        {
+            prev->Next = cur->Next;
+            if(cur->Next == nullptr)
+            {
+                L.Tail = prev;
+            }
+            else
+            {
+                cur->Next->Prev = cur->Prev;
+            }
+        }
+    }
+    int value = cur->Value;
+    delete cur;
+    return value;
+}
+
+//
+// pop_front
+//
+// Removes the node at the head of the list and returns
+// the value from this node.
+//
+// pre-condition: a properly initialized list.
+// post-condition: L with head node removed.
+// exception: throws runtime_error if list empty.
+//
+int  pop_front(List& L)
+{
+    if(L.Head == nullptr)
+    {
+        throw runtime_error("pop_front: empty list");
+    }
+    Node* cur = L.Head;
+    if(cur->Next == nullptr)
+    {
+        L.Head = nullptr;
+        L.Tail = nullptr;
+    }
+    else
+    {
+        Node* next = cur->Next;
+        L.Head = next;
+        next->Prev = nullptr;
+    }
+    int value = cur->Value;
+    delete cur;
+    return value;
+}
+
+//
+// pop_back
+//
+// Removes the node at the tail of the list and returns
+// the value from this node.
+//
+// pre-condition: a properly initialized list.
+// post-condition: L with tail node removed.
+// exception: throws runtime_error if list empty.
+//
+int  pop_back(List& L)
+{
+    if(L.Head == nullptr)
+    {
+        throw runtime_error("pop_back: empty list");
+    }
+    Node* cur = L.Tail;
+    if(cur->Prev == nullptr)
+    {
+        L.Head = nullptr;
+        L.Tail = nullptr;
+    }
+    else
+    {
+        Node* next = cur->Prev;
+        L.Tail = next;
+        next->Next = nullptr;
+    }
+    int value = cur->Value;
+    delete cur;
+    return value;
+}
+
+//
+// push_front
+//
+// Inserts the given value at the head of the list.
+//
+// pre-condition: a properly initialized list.
+// post-condition: L with value inserted at head.
+//
+void push_front(List& L, int value)
+{
+   Node* cur = L.Head;
+   Node* newN = new Node();
+   newN->Value = value;
+   newN->Next = nullptr;
+   newN->Prev = nullptr;
+   
+   if (cur == nullptr)
+   {
+      L.Head = newN;
+      L.Tail = L.Head;
+   }
+   else
+   {
+       newN->Next = cur;
+       cur->Prev = newN;
+      
+       L.Head = newN;
+   }
+}
+
+//
+// push_back
+//
+// Inserts the given value at the tail of the list.
+//
+// pre-condition: a properly initialized list.
+// post-condition: L with value inserted at tail.
+//
+void push_back(List& L, int value)
+{
+   Node* cur = L.Tail;
+   Node* newN = new Node();
+   newN->Value = value;
+   newN->Next = nullptr;
+   newN->Prev = nullptr;
+   
+   if (cur == nullptr)
+   {
+      L.Tail = newN;
+      L.Head = L.Tail;
+   }
+   else
+   {
+      cur->Next = newN;
+      newN->Prev = cur;
+      
+      L.Tail = newN;
+   }
+}
+
+
+
+
+
+
+
+
+
+/*list.h*/
+
+//
+// Declarations of structs, and core functions, for two-way linked-lists.
+//
+// Initially by: Prof. Hummel, U. of Illinois Chicago, Fall 2020
+// Project 05
+//
+
+#pragma once
+
+#include <iostream>
+#include <string>
+#include <exception>
+#include <stdexcept>
+
+using namespace std;
+
+//
+// One node in a two-way linked-list:
+//
+struct Node
+{
+   int   Value;
+   Node* Next;
+   Node* Prev;
+};
+
+//
+// A two-way linked-list with Head and Tail pointers:
+//
+struct List
+{
+   Node* Head;
+   Node* Tail;
+};
+
+//
+// Core linked-list functions:
+//
+
+//
+// init
+//
+// Initializes the list to empty.
+//
+// pre-condition: L is uninitialized and has not been used.
+// post-condition: L is properly initialized to denote empty.
+//
+void init(List& L);
+
+//
+// free
+//
+// Frees the memory associated with the nodes in the list, 
+// and then sets the list to empty.
+//
+// pre-condition: a properly initialized list.
+// post-condition: L is properly set to denote empty.
+//
+void free(List& L);
+
+//
+// empty
+//
+// Returns true if the list is empty, false if not.
+//
+// pre-condition: a properly initialized list.
+// post-condition: L is unchanged.
+//
+bool empty(List L);
+
+//
+// size
+//
+// Returns the number of nodes in the list.
+//
+// pre-condition: a properly initialized list.
+// post-condition: L is unchanged.
+//
+int  size(List L);
+
+//
+// ith
+//
+// Returns the value in the node at the given position.
+// Positions are 0-based, which means a position of 0 
+// denotes the head of the list, and a position of N-1
+// denotes the tail of the list (where N=size(L)).  
+//
+// Example: if L=[10,20,30] then 
+//    ith(L,2) => 30
+//
+// pre-condition: a properly initialized list.
+// post-condition: L is unchanged.
+// exception: throws invalid_argument if position invalid.
+//
+int  ith(List L, int position);
+
+//
+// search
+//
+// Searches the list for the first occurence of value.
+// If found, the position of this value is returned.
+// If not found, -1 is returned.
+//
+// Positions are 0-based, which means a position of 0 
+// denotes the head of the list, and a position of N-1
+// denotes the tail of the list (where N=size(L)).  
+//
+// Example: if L=[10,20,30,20] then 
+//    search(L,20) => 1
+//
+// pre-condition: a properly initialized list.
+// post-condition: L is unchanged.
+//
+int  search(List L, int value);
+
+//
+// insert
+//
+// Inserts the given value in the list such that after
+// the insertion, the value is now at the given
+// position.
+//
+// Positions are 0-based, which means a position of 0 
+// denotes the value will end up at the head of the list,
+// and a position of N denotes the value will end up at
+// the tail of the list.  N=size(L) before insertion.
+//
+// Examples: if L=[10,20] then 
+//    insert(L,0,30) => [30,10,20]
+//    insert(L,1,30) => [10,30,20]
+//    insert(L,2,30) => [10,20,30]
+//
+// pre-condition: a properly initialized list.
+// post-condition: L contains value at given position.
+// exception: throws invalid_argument if position invalid.
+//
+void insert(List& L, int position, int value);
+
+//
+// remove
+//
+// Removes the node at the given position from the list,
+// and returns the value stored in this node.
+//
+// Positions are 0-based, which means a position of 0 
+// denotes the head of the list, and a position of N-1
+// denotes the tail of the list.  N=size(L) before removal.
+//
+// Examples: if L=[10,20,30] then 
+//    remove(L,1) => returns 20 with L=[10,30]
+//
+// pre-condition: a properly initialized list.
+// post-condition: L with node at given position removed.
+// exception: throws invalid_argument if position invalid.
+//
+int  remove(List& L, int position);
+
+//
+// pop_front
+//
+// Removes the node at the head of the list and returns
+// the value from this node.
+//
+// pre-condition: a properly initialized list.
+// post-condition: L with head node removed.
+// exception: throws runtime_error if list empty.
+//
+int  pop_front(List& L);
+
+//
+// pop_back
+//
+// Removes the node at the tail of the list and returns
+// the value from this node.
+//
+// pre-condition: a properly initialized list.
+// post-condition: L with tail node removed.
+// exception: throws runtime_error if list empty.
+//
+int  pop_back(List& L);
+
+//
+// push_front
+//
+// Inserts the given value at the head of the list.
+//
+// pre-condition: a properly initialized list.
+// post-condition: L with value inserted at head.
+//
+void push_front(List& L, int value);
+
+//
+// push_back
+//
+// Inserts the given value at the tail of the list.
+//
+// pre-condition: a properly initialized list.
+// post-condition: L with value inserted at tail.
+//
+void push_back(List& L, int value);
+
+
+
+
+
+
+
+
+/*oper.h*/
+
+//
+// Declarations of command functions manipulating linked-lists.
+//
+// Initially by: Prof. Hummel, U. of Illinois Chicago, Fall 2020
+// Project 05
+//
+
+#pragma once
+
+#include <iostream>
+#include <string>
+
+#include "list.h"
+
+using namespace std;
+
+//
+// doPrint
+//
+// Prints each element, one after another, on a single line; 
+// a space follows each element. 
+//
+void doPrint(List L);
+
+//
+// doSearch
+//
+// Searches the list for the given value.  If found, a message with
+// the value and list position is output on the console.  If not 
+// found, a "not found" message is output.
+//
+void doSearch(List L, int value);
+
+//
+// doInsert
+//
+// Attempts to insert the value in the List at the specified
+// position.  If successful, a message is output on the console
+// containing the value and position.  If unsuccessful, the 
+// exception is caught and the error msg is output to the 
+// console.  Either way, the list is printed afterwards.
+//
+void doInsert(List& L, int position, int value);
+
+//
+// doRemove
+//
+// Attempts to remove the node at the specified position from
+// the list.  If successful, a message containing the node's 
+// value and position is output on the console.  If unsuccessful,
+// the exception is caught and the error msg is output to the 
+// console.  Either way, the list is printed afterwards.
+//
+void doRemove(List& L, int position);
+
+//
+// doRotateLeft
+//
+// Rotates the given list left, meaning the head element is removed
+// and then inserted at the tail. The result is that all elements move
+// forward ("left") one place.  If the list is empty, nothing happens;
+// an empty list is not considered an error.
+//
+// The list is printed before and after the rotation, with a success
+// message in-between.
+//
+void doRotateLeft(List& L);
+
+//
+// doRotateRight
+//
+// Rotates the given list right, meaning the tail element is removed
+// and then inserted at the head. The result is that all elements move
+// backward ("right") one place.  If the list is empty, nothing happens;
+// an empty list is not considered an error.
+//
+// The list is printed before and after the rotation, with a success
+// message in-between.
+//
+void doRotateRight(List& L);
+
+//
+// doFree
+//
+// Frees the nodes in the given list, resetting the list to empty.
+// A success message is output to the console, followed by the 
+// contents of the list to confirm it's empty.
+//
+void doFree(List& L);
+
+//
+// doAppend
+//
+// Appends the "Other" list to the end of "L".  Afterwards, the
+// "Other" list will be empty.  The lists are printed before and 
+// after the operation, with a success message in-between.
+//
+void doAppend(List& L, List& Other); 
+
+//
+// doMerge
+//
+// Merges the "Other" list into "L".  Afterwards, the "Other" list
+// will be empty.  By merge this means the elements of Other are
+// alternated with those of L.  Example: suppose we start with
+//    L = [10, 30, 20, 90, 80] and Other = [15, 5, 25]
+// Then after doMerge(L, Other):
+//    L = [10, 15, 30, 5, 20, 25, 90, 80] and Other = [ ]
+// Extra elements after the merge appear at the end of L.
+//
+// The lists are printed before and after the operation, with a 
+// success message in-between.
+// 
+void doMerge(List& L, List& Other); 
+
+//
+// doCopy
+//
+// The current contents of Dest are free, and then a "deep" copy
+// of Src is stored in Dest.  A deep copy means that for each node
+// in Dest, a new node is dynamically-allocated and stored in Src.
+// This means that after doCopy returns, Dest is a complete and
+// distinct copy of Src.
+//
+// The lists are printed before and after the operation, with a 
+// success message in-between.
+//
+void doCopy(List& Dest, List Src);
+
+//
+// doClean
+//
+// Removes duplicates from L, while preserving the original order.
+// The list is printed before and after, along with the # of 
+// duplicate values that were removed.
+//
+void doClean(List& L);
